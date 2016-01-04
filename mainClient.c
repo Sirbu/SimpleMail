@@ -2,6 +2,6 @@
 
 int main()
 {
-printf("ll");
+printf("llj");
     return 0;
 }
