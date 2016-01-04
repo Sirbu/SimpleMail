@@ -1,6 +1,8 @@
 #ifndef __SERVEUR_H__
 #define __SERVEUR_H__
 
+// #define TAILE_BUFFER    4096
+
 /* Initialisation.
  * Creation du serveur.
  * renvoie 1 si �a c'est bien pass� 0 sinon

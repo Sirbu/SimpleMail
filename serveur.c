@@ -14,6 +14,7 @@
 #include <sys/select.h>
 #include <netinet/in.h>
 #include <arpa/inet.h>
+#include <strings.h>
 #endif
 
 #include <errno.h>
@@ -31,11 +32,6 @@
 #define socklen_t int
 #endif
 
-// Ces fonctions sont écrites par
-// nos professeurs.
-// Seule la fin est écrite par Nadjim Mehdioui et Alexis Sirbulescu
-// C'est signalé par un commentaire en bas.
-
 /* Variables cachees */
 
 /* le socket d'ecoute */
@@ -48,6 +44,7 @@ int socketService;
 char tamponClient[LONGUEUR_TAMPON];
 int debutTampon;
 int finTampon;
+int finConnexion = 0;
 
 
 /* Initialisation.
@@ -58,8 +55,8 @@ int Initialisation() {
 }
 
 /* Initialisation.
- * Creation du serveur en précisant le service ou numéro de port.
- * renvoie 1 si ça c'est bien passé 0 sinon
+ * Creation du serveur en precisant le service ou numero de port.
+ * renvoie 1 si ca c'est bien passe 0 sinon
  */
 int InitialisationAvecService(char *service) {
 	int n;
@@ -115,7 +112,7 @@ int InitialisationAvecService(char *service) {
 	freeaddrinfo(ressave);
 	/* attends au max 4 clients */
 	listen(socketEcoute, 4);
-	printf("Creation du serveur reussie sur %s.\n", service);
+	printf("Creation du serveur reussie.\n");
 
 	return 1;
 }
@@ -143,6 +140,7 @@ int AttenteClient() {
 	 */
 	debutTampon = 0;
 	finTampon = 0;
+	finConnexion = FALSE;
 
 	return 1;
 }
@@ -154,22 +152,29 @@ char *Reception() {
 	int index = 0;
 	int fini = FALSE;
 	int retour = 0;
+	int trouve = FALSE;
+
+	if(finConnexion) {
+		return NULL;
+	}
+
 	while(!fini) {
 		/* on cherche dans le tampon courant */
-        /* on contrôle que le tampon se termine par les
-        deux caractères "/" et ";" */
-		while((finTampon > debutTampon) &&
-			 (tamponClient[debutTampon - 1] != '/') &&
-             (tamponClient[debutTampon]!=';') ) {
-			message[index++] = tamponClient[debutTampon++];
+		while((finTampon > debutTampon) && (!trouve)) {
+			//fprintf(stderr, "Boucle recherche char : %c(%x), index %d debut tampon %d.\n",
+			//		tamponClient[debutTampon], tamponClient[debutTampon], index, debutTampon);
+			if (tamponClient[debutTampon]=='\n')
+				trouve = TRUE;
+			else
+				message[index++] = tamponClient[debutTampon++];
 		}
 		/* on a trouve ? */
-		if ((index > 0) && (tamponClient[debutTampon]=='/') &&
-            (tamponClient[debutTampon]==';')) {
+		if (trouve) {
 			message[index++] = '\n';
 			message[index] = '\0';
 			debutTampon++;
 			fini = TRUE;
+			//fprintf(stderr, "trouve\n");
 #ifdef WIN32
 			return _strdup(message);
 #else
@@ -178,13 +183,27 @@ char *Reception() {
 		} else {
 			/* il faut en lire plus */
 			debutTampon = 0;
+			//fprintf(stderr, "recv\n");
 			retour = recv(socketService, tamponClient, LONGUEUR_TAMPON, 0);
+			//fprintf(stderr, "retour : %d\n", retour);
 			if (retour < 0) {
 				perror("Reception, erreur de recv.");
 				return NULL;
 			} else if(retour == 0) {
 				fprintf(stderr, "Reception, le client a ferme la connexion.\n");
-				return NULL;
+				finConnexion = TRUE;
+				// on n'en recevra pas plus, on renvoie ce qu'on avait ou null sinon
+				if(index > 0) {
+					message[index++] = '\n';
+					message[index] = '\0';
+#ifdef WIN32
+					return _strdup(message);
+#else
+					return strdup(message);
+#endif
+				} else {
+					return NULL;
+				}
 			} else {
 				/*
 				 * on a recu "retour" octets
@@ -203,7 +222,6 @@ int Emission(char *message) {
 	int taille;
 	if(strstr(message, "\n") == NULL) {
 		fprintf(stderr, "Emission, Le message n'est pas termine par \\n.\n");
-		return 0;
 	}
 	taille = strlen(message);
 	if (send(socketService, message, taille,0) == -1) {
@@ -213,6 +231,56 @@ int Emission(char *message) {
 	printf("Emission de %d caracteres.\n", taille+1);
 	return 1;
 }
+
+
+/* Recoit des donnees envoyees par le client.
+ */
+int ReceptionBinaire(char *donnees, size_t tailleMax) {
+	size_t dejaRecu = 0;
+	int retour = 0;
+	/* on commence par recopier tout ce qui reste dans le tampon
+	 */
+	while((finTampon > debutTampon) && (dejaRecu < tailleMax)) {
+		donnees[dejaRecu] = tamponClient[debutTampon];
+		dejaRecu++;
+		debutTampon++;
+	}
+	/* si on n'est pas arrive au max
+	 * on essaie de recevoir plus de donnees
+	 */
+	if(dejaRecu < tailleMax) {
+		retour = recv(socketService, donnees + dejaRecu, tailleMax - dejaRecu, 0);
+		if(retour < 0) {
+			perror("ReceptionBinaire, erreur de recv.");
+			return -1;
+		} else if(retour == 0) {
+			fprintf(stderr, "ReceptionBinaire, le client a ferme la connexion.\n");
+			return 0;
+		} else {
+			/*
+			 * on a recu "retour" octets en plus
+			 */
+			return dejaRecu + retour;
+		}
+	} else {
+		return dejaRecu;
+	}
+}
+
+/* Envoie des donnees au client en precisant leur taille.
+ */
+int EmissionBinaire(char *donnees, size_t taille) {
+	int retour = 0;
+	retour = send(socketService, donnees, taille, 0);
+	if(retour == -1) {
+		perror("Emission, probleme lors du send.");
+		return -1;
+	} else {
+		return retour;
+	}
+}
+
+
 
 /* Ferme la connexion avec le client.
  */
@@ -225,5 +293,3 @@ void TerminaisonClient() {
 void Terminaison() {
 	close(socketEcoute);
 }
-
-// Fonctions écrites par Nadjim Mehdioui et Alexis Sirbulescu
