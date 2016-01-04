@@ -2,6 +2,9 @@
 
 int main()
 {
-    
+    Initialisation();
+
+    AttenteClient()
+
     return 0;
 }

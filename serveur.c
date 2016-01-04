@@ -31,6 +31,11 @@
 #define socklen_t int
 #endif
 
+// Ces fonctions sont écrites par
+// nos professeurs.
+// Seule la fin est écrite par Nadjim Mehdioui et Alexis Sirbulescu
+// C'est signalé par un commentaire en bas.
+
 /* Variables cachees */
 
 /* le socket d'ecoute */
@@ -220,3 +225,5 @@ void TerminaisonClient() {
 void Terminaison() {
 	close(socketEcoute);
 }
+
+// Fonctions écrites par Nadjim Mehdioui et Alexis Sirbulescu
