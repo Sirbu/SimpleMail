@@ -245,3 +245,15 @@ int EmissionBinaire(char *donnees, size_t taille) {
 void Terminaison() {
 	close(socketClient);
 }
+/*authentification
+*/
+int authentification(){
+    char login[20];
+    printf("bienvenue sur votre messagerie !!\n");
+    printf("a present veuillez vous authentifier\n");
+    printf("login:");
+    fgets(login,20,stdin);
+    printf("\npassword: %s");
+    fgets(login,20,stdin);
+
+}
