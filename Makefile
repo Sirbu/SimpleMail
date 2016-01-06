@@ -3,6 +3,9 @@ CFLAGS = -std=c99 -Wall
 
 all: Serveur Client
 
+clean:
+	rm -Rf *.o Client Serveur 2> /dev/null
+
 ### Compilation des fichiers du serveur ###
 Serveur: mainServeur.o serveur.o
 	$(CC) $(CCFLAGS) mainServeur.o serveur.o -o Serveur
