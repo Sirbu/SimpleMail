@@ -1,7 +1,7 @@
 #include <stdio.h>
-
+#include "client.h"
 int main()
 {
-printf("llj");
+    authentification();
     return 0;
 }

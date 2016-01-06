@@ -1,5 +1,5 @@
-$CC="gcc"
-$CFLAGS="-std=c99 -Wall"
+CC = gcc
+CFLAGS = -std=c99 -Wall
 
 all: Serveur Client
 

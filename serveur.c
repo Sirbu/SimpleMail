@@ -163,7 +163,8 @@ char *Reception() {
 		while((finTampon > debutTampon) && (!trouve)) {
 			//fprintf(stderr, "Boucle recherche char : %c(%x), index %d debut tampon %d.\n",
 			//		tamponClient[debutTampon], tamponClient[debutTampon], index, debutTampon);
-			if (tamponClient[debutTampon]=='\n')
+			if (tamponClient[debutTampon]=='/'
+				&& tamponClient[debutTampon+1] == ';')
 				trouve = TRUE;
 			else
 				message[index++] = tamponClient[debutTampon++];
