@@ -294,3 +294,53 @@ void TerminaisonClient() {
 void Terminaison() {
 	close(socketEcoute);
 }
+
+// Fonctions écrites par les élèves
+
+// Permet de parser la requête pour stocker
+// les différents champs
+// retourne 0 si tout se passe bien, un code d'erreur sinon.
+int parse_request(char* requete, char* type_requete, char** parametres)
+{
+	char* p_type = NULL; 	// pointeur qui sera placé juste après le champ type
+	int i = 0; 	// compteur de boucle...
+
+	if(requete == NULL)
+	{
+		fprintf(stderr, "[E] Parsing error : la chaine requête est nulle !\n");
+		return 1;
+	}
+
+	p_type = strchr(requete, '/');
+	if(p_type == NULL)
+	{
+		fprintf(stderr, "[E] Error : carcactère \'/\' absent de la requête\n");
+		return 2;
+	}
+
+	// allocation dynamique des variables
+	type_requete = calloc(10, sizeof(char));
+	if(type_requete == NULL)
+	{
+		fprintf(stderr, "[E] Erreur : malloc impossible !\n");
+		return 3;
+	}
+
+	while(requete+i != p_type) // on veut lire le type de requête
+	{
+		if(sizeof(type_requete) < i)
+		{
+			// si on a plus de place, on en rajoute
+			type_requete = realloc(type_requete, sizeof(type_requete+5));
+		}
+
+		type_requete = requete+i;
+
+		i++;
+	}
+
+	printf("[D] type_requete = %s\n", type_requete);
+
+
+
+}
