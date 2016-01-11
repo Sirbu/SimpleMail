@@ -1,6 +1,5 @@
 CC = gcc
-CFLAGS = -std=c99 -Wall
-# LIB = -lcrypt
+CFLAGS = -Wall
 
 all: Serveur Client
 
