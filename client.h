@@ -1,6 +1,11 @@
 #ifndef __CLIENT_H__
 #define __CLIENT_H__
-
+#define AUTH_ERROR 1
+#define DEST_ERROR 2
+#define DEL_ERROR  3
+#define READ_ERROR 4
+#define NO_PB	   5
+#define INTERN_ERROR 9
 /* Initialisation.
  * Connexion au serveur sur la machine donnee.
  * Utilisez localhost pour un fonctionnement local.

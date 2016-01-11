@@ -18,10 +18,11 @@ serveur.o:
 
 ### Compilation des fichiers du client ###
 Client: mainClient.o client.o
-	$(CC) $(CFLAGS) mainClient.o client.o -o Client
+	$(CC) $(CCFLAGS) mainClient.o client.o -o Client -lcrypt
 
 mainClient.o: mainClient.c
 	$(CC) $(CFLAGS) -c mainClient.c -o mainClient.o
 
 client.o:
 	$(CC) $(CFLAGS) -c client.c -o client.o
+			

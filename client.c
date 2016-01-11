@@ -3,7 +3,8 @@
 #include <ctype.h>
 #include <string.h>
 #include <sys/types.h>
-
+#include <openssl/sha.h>
+#include <crypt.h>
 #ifdef WIN32
 #include <winsock2.h>
 #include <ws2tcpip.h>
@@ -243,4 +244,57 @@ int EmissionBinaire(char *donnees, size_t taille) {
  */
 void Terminaison() {
 	close(socketClient);
+}
+
+/*authentification
+elle retourne NO_PB si tout s'est bien passé
+un autre code sinon
+*/
+int authentification(){
+	int code_ret;
+	char request[100]="AUTHENTIFICATION/";
+	char login[20];	
+	char *password=malloc(20);
+	int n=0;
+	int etat=1;
+	
+	
+	printf("bienvenue sur votre messagerie\n !!");
+	printf("authentifiez vous\n !!");
+	printf("login: ");
+	fgets(login,20,stdin);
+	login[strlen(login)-1]='/';/*elimination du retour a la ligne en le remplacant par un caracétere utile pour ma requette*/
+	printf("password: ");
+	fgets(password,20,stdin);
+	password[strlen(password)-1]='\0';/*elimination du retour a la ligne*/
+	/*cryptage du mot de passe avant l'envoie*/
+	 password=crypt(password,"$6$");
+	/*formulation de la requette par concatenation*/
+	strcat(request,login);
+	strcat(request,password);
+	strcat(request,"/;");
+	printf("%s",request);
+	/*envoie de la requette et verification du bon acheminement*/
+
+	while (etat && n<4){//on arrete au bout de 4 echecs
+		if (!emission(request)){
+			n++;			
+		}
+		else{
+			etat=0;
+		}
+	}
+	if (n==4)
+		exit(INTERN_ERROR);/*echec d'emission*/
+			
+	      /*attente de la reponse*/
+	 request=reception();
+	 if (request!=NULL){
+		sscanf(request,"return/%d",code_ret);/*recuperation du code retour par le serveur*/
+		return (code_ret);		
+	      }
+	      else 
+			exit(INTERN_ERROR);
+	
+				
 }
