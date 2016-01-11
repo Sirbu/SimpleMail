@@ -1,6 +1,8 @@
 #ifndef __SERVEUR_H__
 #define __SERVEUR_H__
 
+#define TYPE_LEN 20     // longueur du type de la requête
+
 // #define TAILE_BUFFER    4096
 
 /* Initialisation.
@@ -53,5 +55,9 @@ void TerminaisonClient();
 /* Arrete le serveur.
  */
 void Terminaison();
+
+// En-têtes des fonctions des élèves
+int parse_request(char* requete, char* type_requete, char** parametres);
+
 
 #endif
