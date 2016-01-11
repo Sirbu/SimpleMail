@@ -311,6 +311,8 @@ int parse_request(char* requete, char* type_requete, char** parametres)
 		return 1;
 	}
 
+	printf("[D] Request = %s\n", requete);
+
 	p_type = strchr(requete, '/');
 	if(p_type == NULL)
 	{
@@ -331,6 +333,7 @@ int parse_request(char* requete, char* type_requete, char** parametres)
 		if(sizeof(type_requete) < i)
 		{
 			// si on a plus de place, on en rajoute
+			printf("[D] Realloc %d\r", i);
 			type_requete = realloc(type_requete, sizeof(type_requete+5));
 		}
 
@@ -339,7 +342,7 @@ int parse_request(char* requete, char* type_requete, char** parametres)
 		i++;
 	}
 
-	printf("[D] type_requete = %s\n", type_requete);
+	printf("\n[D] type_requete = %s\n", type_requete);
 
 
 

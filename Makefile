@@ -1,10 +1,11 @@
 CC = gcc
 CFLAGS = -std=c99 -Wall
+# LIB = -lcrypt
 
 all: Serveur Client
 
 clean:
-	rm -Rf *.o Client Serveur 2> /dev/null
+	rm -Rf *.o Client Serveur
 
 ### Compilation des fichiers du serveur ###
 Serveur: mainServeur.o serveur.o
