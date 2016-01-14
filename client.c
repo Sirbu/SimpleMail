@@ -123,7 +123,7 @@ char *Reception() {
 		while((finTampon > debutTampon) && (!trouve)) {
 			//fprintf(stderr, "Boucle recherche char : %c(%x), index %d debut tampon %d.\n",
 			//					tamponClient[debutTampon], tamponClient[debutTampon], index, debutTampon);
-			if (tamponClient[debutTampon]=='\n')
+			if (tamponClient[debutTampon]=='/' && tamponClient[debutTampon+1])
 				trouve = TRUE;
 			else
 				message[index++] = tamponClient[debutTampon++];
@@ -180,7 +180,7 @@ char *Reception() {
  */
 int Emission(char *message) {
 	int taille;
-	if(strstr(message, "\n") == NULL) {
+	if(strstr(message, "/;") == NULL) {
 		fprintf(stderr, "Emission, Le message n'est pas termine par \\n.\n");
 	}
 	taille = strlen(message);
@@ -252,13 +252,12 @@ un autre code sinon
 */
 int authentification(){
 	int code_ret;
-	char request[100]="AUTHENTIFICATION/";
-	char login[20];	
-	char *password=malloc(20);
+	char *request=(char*)malloc(200);
+	char *login=(char*)malloc(20);
+	char *password=(char*)malloc(20);
 	int n=0;
 	int etat=1;
-	
-	
+	/********************************************************/
 	printf("bienvenue sur votre messagerie\n !!");
 	printf("authentifiez vous\n !!");
 	printf("login: ");
@@ -270,6 +269,7 @@ int authentification(){
 	/*cryptage du mot de passe avant l'envoie*/
 	 password=crypt(password,"$6$");
 	/*formulation de la requette par concatenation*/
+	strcat(request,"authentification/");
 	strcat(request,login);
 	strcat(request,password);
 	strcat(request,"/;");
@@ -277,8 +277,8 @@ int authentification(){
 	/*envoie de la requette et verification du bon acheminement*/
 
 	while (etat && n<4){//on arrete au bout de 4 echecs
-		if (!emission(request)){
-			n++;			
+		if (!Emission(request)){
+			n++;
 		}
 		else{
 			etat=0;
@@ -286,15 +286,14 @@ int authentification(){
 	}
 	if (n==4)
 		exit(INTERN_ERROR);/*echec d'emission*/
-			
+
 	      /*attente de la reponse*/
-	 request=reception();
+	 request=Reception();
 	 if (request!=NULL){
-		sscanf(request,"return/%d",code_ret);/*recuperation du code retour par le serveur*/
-		return (code_ret);		
+		sscanf(request,"return/%d/;",&code_ret);/*recuperation du code retour par le serveur*/
+		return (code_ret);
 	      }
-	      else 
-			exit(INTERN_ERROR);
-	
-				
+	      else
+			return(INTERN_ERROR);
+
 }

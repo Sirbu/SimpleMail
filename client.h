@@ -48,7 +48,8 @@ int EmissionBinaire(char *donnees, size_t taille);
  */
 void Terminaison();
 /* recupére le login et le mot de passe pour
-*autyentifier le client
+*authentifier le client
+ca renvoie NO_PB si tout s'est bien passé
 */
 int authentification();
 #endif
