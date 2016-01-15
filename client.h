@@ -6,6 +6,8 @@
 #define READ_ERROR 4
 #define NO_PB	   5
 #define INTERN_ERROR 9
+#define TAILLE_REQUETTE 4096
+#define TAILLE_ID 20
 /* Initialisation.
  * Connexion au serveur sur la machine donnee.
  * Utilisez localhost pour un fonctionnement local.
@@ -52,4 +54,5 @@ void Terminaison();
 ca renvoie NO_PB si tout s'est bien passé
 */
 int authentification();
+
 #endif

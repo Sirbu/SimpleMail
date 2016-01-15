@@ -252,19 +252,25 @@ un autre code sinon
 */
 int authentification(){
 	int code_ret;
-	char *request=(char*)malloc(200);
-	char *login=(char*)malloc(20);
-	char *password=(char*)malloc(20);
+	char *request=(char*)malloc(TAILLE_REQUETTE);
+	if(request==NULL)
+		return(INTERN_ERROR);
+	char *login=(char*)malloc(TAILLE_ID);
+	if(login==NULL)
+		return(INTERN_ERROR);
+	char *password=(char*)malloc(TAILLE_ID);
+	if(password==NULL)
+		return(INTERN_ERROR);
 	int n=0;
 	int etat=1;
 	/********************************************************/
 	printf("bienvenue sur votre messagerie\n !!");
 	printf("authentifiez vous\n !!");
 	printf("login: ");
-	fgets(login,20,stdin);
+	fgets(login,TAILLE_ID,stdin);
 	login[strlen(login)-1]='/';/*elimination du retour a la ligne en le remplacant par un caracétere utile pour ma requette*/
 	printf("password: ");
-	fgets(password,20,stdin);
+	fgets(password,TAILLE_ID,stdin);
 	password[strlen(password)-1]='\0';/*elimination du retour a la ligne*/
 	/*cryptage du mot de passe avant l'envoie*/
 	 password=crypt(password,"$6$");
@@ -273,7 +279,7 @@ int authentification(){
 	strcat(request,login);
 	strcat(request,password);
 	strcat(request,"/;");
-	printf("%s",request);
+	printf("%s\n",request);
 	/*envoie de la requette et verification du bon acheminement*/
 
 	while (etat && n<4){//on arrete au bout de 4 echecs
@@ -289,11 +295,12 @@ int authentification(){
 
 	      /*attente de la reponse*/
 	 request=Reception();
+
 	 if (request!=NULL){
-		sscanf(request,"return/%d/;",&code_ret);/*recuperation du code retour par le serveur*/
+			sscanf(request,"return/%d/;",&code_ret);/*recuperation du code retour par le serveur*/
 		return (code_ret);
 	      }
-	      else
+	  else
 			return(INTERN_ERROR);
 
 }
