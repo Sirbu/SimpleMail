@@ -112,7 +112,7 @@ int InitialisationAvecService(char *service) {
 	freeaddrinfo(ressave);
 	/* attends au max 4 clients */
 	listen(socketEcoute, 4);
-	printf("Creation du serveur reussie.\n");
+	printf("Creation du serveur reussie sur le port %s\n", service);
 
 	return 1;
 }
@@ -300,10 +300,11 @@ void Terminaison() {
 // Permet de parser la requête pour stocker
 // les différents champs
 // retourne 0 si tout se passe bien, un code d'erreur sinon.
-int parse_request(char* requete, char* type_requete, char** parametres)
+int parse_type(char* requete, char* type_requete)
 {
 	char* p_type = NULL; 	// pointeur qui sera placé juste après le champ type
-	int i = 0; 	// compteur de boucle...
+	int i = 0; 			   // compteur de boucle...
+	int j = 0;		  	  // deuxième compteur de boucle
 
 	if(requete == NULL)
 	{
@@ -313,37 +314,29 @@ int parse_request(char* requete, char* type_requete, char** parametres)
 
 	printf("[D] Request = %s\n", requete);
 
+	// si la requête n'a pas de paramètres, le type
+	// est donc la seule chose présente dans la requête
+	printf("[+] Extraction du type de la requête\n");
 	p_type = strchr(requete, '/');
 	if(p_type == NULL)
 	{
-		fprintf(stderr, "[E] Error : carcactère \'/\' absent de la requête\n");
+		fprintf(stderr, "[W] Warning : carcactère \'/\' absent de la requête\n");
+
+		strncpy(type_requete, requete, strlen(type_requete));
+
 		return 2;
 	}
-
-	// allocation dynamique des variables
-	type_requete = calloc(10, sizeof(char));
-	if(type_requete == NULL)
+	else
 	{
-		fprintf(stderr, "[E] Erreur : malloc impossible !\n");
-		return 3;
-	}
-
-	while(requete+i != p_type) // on veut lire le type de requête
-	{
-		if(sizeof(type_requete) < i)
+		// sscanf(requete, "%s/", type_requete);
+		while(requete[i] != '/')
 		{
-			// si on a plus de place, on en rajoute
-			printf("[D] Realloc %d\r", i);
-			type_requete = realloc(type_requete, sizeof(type_requete+5));
+			type_requete[i] = requete[i];
+			i++;
 		}
-
-		type_requete = requete+i;
-
-		i++;
+		type_requete[i] = '\0';
 	}
 
-	printf("\n[D] type_requete = %s\n", type_requete);
-
-
+	return 0;	// aucune erreur
 
 }

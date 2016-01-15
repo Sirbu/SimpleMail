@@ -1,7 +1,15 @@
 #ifndef __SERVEUR_H__
 #define __SERVEUR_H__
 
-#define TYPE_LEN 20     // longueur du type de la requête
+#define TAILLE_REQ  4096
+
+#define TAILLE_TYPE 512
+
+#define NBR_PARAM   5   // nombre max de paramètres
+#define TAILLE_PARAM    2048
+
+#define TAILLE_LOGIN    20
+#define TAILLE_PASS     20
 
 // #define TAILE_BUFFER    4096
 
@@ -57,7 +65,7 @@ void TerminaisonClient();
 void Terminaison();
 
 // En-têtes des fonctions des élèves
-int parse_request(char* requete, char* type_requete, char** parametres);
+int parse_type(char* requete, char* type_requete);
 
 
 #endif
