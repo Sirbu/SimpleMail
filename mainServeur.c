@@ -86,6 +86,12 @@ int main()
                     envoi_reponse(AUTH_ERROR);
                 }
             }
+            else
+            {
+                printf("[+] Erreur : trame non reconnue !\n");
+
+                
+            }
         }
 
     }
