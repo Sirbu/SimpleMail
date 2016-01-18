@@ -381,7 +381,7 @@ int parseLoginPass(char* requete, char* login, char* password)
 
 	strncpy(password, p_requete, TAILLE_PASS);
 
-	printf("[D] Password : %s\n", password);
+	// printf("[D] Password : %s\n", password);
 
 	return 0;
 }
@@ -414,7 +414,7 @@ int checkAuthentification(char* login, char* password)
 
 	while(!found && fgets(line, LINE_LENGTH, auth_file) != NULL)
 	{
-		printf("[D] login = %s\nLine = %s\n", login, line);
+		// printf("[D] login = %s\nLine = %s\n", login, line);
 		if(strstr(line, login) != NULL)
 		{
 			found = 1;
@@ -445,7 +445,7 @@ int checkAuthentification(char* login, char* password)
 	// on retourne le réultat de la comparaison
 	// du hash reçu avec celui dans le fichier
 	p_pass++;
-	printf("[D] p_pass = %s\npassword = %s\n", p_pass, password);
+	// printf("[D] p_pass = %s\npassword = %s\n", p_pass, password);
 	return strncmp(p_pass, password, strlen(p_pass));
 }
 
@@ -454,6 +454,8 @@ void envoi_reponse(int code_retour)
 	char message[TAILLE_REQ];
 
 	sprintf(message, "return/%d/;", code_retour);
+
+	printf("[D] return request : %s\n", message);
 
 	Emission(message);
 }

@@ -53,7 +53,7 @@ int main()
             printf("[+] Analyse de la requête...\n");
             parseType(requete, type_requete);
 
-            printf("[D] type_requete : %s\n", type_requete);
+            // printf("[D] type_requete : %s\n", type_requete);
 
             // choix du comportement en fonction du type de requête
             if(strncmp(type_requete, "authentification", strlen(type_requete)) == 0)
