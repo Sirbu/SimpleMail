@@ -78,6 +78,13 @@ int main()
 
                     authentifie = 1;
                 }
+                else
+                {
+                    printf("[+] Authentification refusée !\n");
+                    printf("[+] Dégage %s!\n", login);
+
+                    envoi_reponse(AUTH_ERROR);
+                }
             }
         }
 
