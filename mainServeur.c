@@ -55,6 +55,11 @@ int main()
 
             // printf("[D] type_requete : %s\n", type_requete);
 
+            if(requete == NULL)
+            {
+                printf("[+] Erreur : fatal socket error !\n");
+                exit(EXIT_FAILURE);
+            }
             // choix du comportement en fonction du type de requête
             if(strncmp(type_requete, "authentification", strlen(type_requete)) == 0)
             {
@@ -90,7 +95,7 @@ int main()
             {
                 printf("[+] Erreur : trame non reconnue !\n");
 
-                
+
             }
         }
 
