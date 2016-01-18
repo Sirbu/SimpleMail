@@ -131,6 +131,9 @@ char *Reception() {
 		/* on a trouve ? */
 		if (trouve) {
 			//message[index++] = '\n';
+			// on recopie le /; dans le message
+			message[index++] = tamponClient[debutTampon++];
+			message[index++] = tamponClient[debutTampon++];
 			message[index] = '\0';
 			debutTampon++;
 			fini = TRUE;

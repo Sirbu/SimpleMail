@@ -173,6 +173,9 @@ char *Reception() {
 		/* on a trouve ? */
 		if (trouve) {
 			// message[index++] = '\n';
+			// on recopie le /; dans le message
+			message[index++] = tamponClient[debutTampon++];
+			message[index++] = tamponClient[debutTampon++];
 			message[index] = '\0';
 			debutTampon++;
 			fini = TRUE;
@@ -362,7 +365,7 @@ int parseLoginPass(char* requete, char* login, char* password)
 	// sur lequel on l'a placé avec strchr()
 	p_requete++;
 	// ensuite on peut lire l'utilisateur
-	printf("[+] User : %s length = %d\n", p_requete, (int)strlen(p_requete));
+	printf("[D] User : %s length = %d\n", p_requete, (int)strlen(p_requete));
 	while(p_requete[i] != '/')
 	{
 		login[i] = p_requete[i++];
