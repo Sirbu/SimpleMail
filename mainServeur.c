@@ -73,6 +73,9 @@ int main()
                 {
                     printf("[+] Authentification validée !\n");
                     printf("[+] Bienvenue %s!\n", login);
+
+                    envoi_reponse(NO_PB);
+
                     authentifie = 1;
                 }
             }
