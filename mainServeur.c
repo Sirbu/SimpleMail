@@ -49,17 +49,18 @@ int main()
             requete = Reception();
 
             printf("[+] Message reçu : %s\n", requete);
+            if(requete == NULL)
+            {
+                printf("[+] Erreur : fatal socket error !\n");
+                envoi_reponse(SERV_ERROR);
+                exit(EXIT_FAILURE);
+            }
 
             printf("[+] Analyse de la requête...\n");
             parseType(requete, type_requete);
 
             // printf("[D] type_requete : %s\n", type_requete);
 
-            if(requete == NULL)
-            {
-                printf("[+] Erreur : fatal socket error !\n");
-                exit(EXIT_FAILURE);
-            }
             // choix du comportement en fonction du type de requête
             if(strncmp(type_requete, "authentification", strlen(type_requete)) == 0)
             {
@@ -94,8 +95,7 @@ int main()
             else
             {
                 printf("[+] Erreur : trame non reconnue !\n");
-
-
+                envoi_reponse(SERV_ERROR);
             }
         }
 

@@ -7,6 +7,7 @@
 #define DEL_ERROR   3
 #define READ_ERROR  4
 #define NO_PB       5
+#define SERV_ERROR  6
 
 
 #define TAILLE_REQ  4096
