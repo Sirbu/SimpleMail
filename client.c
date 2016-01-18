@@ -123,14 +123,14 @@ char *Reception() {
 		while((finTampon > debutTampon) && (!trouve)) {
 			//fprintf(stderr, "Boucle recherche char : %c(%x), index %d debut tampon %d.\n",
 			//					tamponClient[debutTampon], tamponClient[debutTampon], index, debutTampon);
-			if (tamponClient[debutTampon]=='/' && tamponClient[debutTampon+1])
+			if (tamponClient[debutTampon]=='/' && tamponClient[debutTampon+1]==';')
 				trouve = TRUE;
 			else
 				message[index++] = tamponClient[debutTampon++];
 		}
 		/* on a trouve ? */
 		if (trouve) {
-			message[index++] = '\n';
+			//message[index++] = '\n';
 			message[index] = '\0';
 			debutTampon++;
 			fini = TRUE;
@@ -257,10 +257,10 @@ int authentification(){
 		return(INTERN_ERROR);
 	char *login=(char*)malloc(TAILLE_ID);
 	if(login==NULL)
-		return(INTERN_ERROR);
+		exit(INTERN_ERROR);
 	char *password=(char*)malloc(TAILLE_ID);
 	if(password==NULL)
-		return(INTERN_ERROR);
+		exit(INTERN_ERROR);
 	int n=0;
 	int etat=1;
 	/********************************************************/
@@ -279,25 +279,17 @@ int authentification(){
 	strcat(request,login);
 	strcat(request,password);
 	strcat(request,"/;");
-	printf("%s\n",request);
+
 	/*envoie de la requette et verification du bon acheminement*/
 
-	while (etat && n<4){//on arrete au bout de 4 echecs
-		if (!Emission(request)){
-			n++;
-		}
-		else{
-			etat=0;
-		}
-	}
-	if (n==4)
-		exit(INTERN_ERROR);/*echec d'emission*/
+	Emission(request);
 
-	      /*attente de la reponse*/
+	/*attente de la reponse*/
 	 request=Reception();
-
+  printf("**************%s***********\n",request);
 	 if (request!=NULL){
-			sscanf(request,"return/%d/;",&code_ret);/*recuperation du code retour par le serveur*/
+			if((sscanf(request,"return/%d/;",&code_ret))!=1)
+						printf("vous n'avez pas recuperer le bon nombre de param");/*recuperation du code retour par le serveur*/
 		return (code_ret);
 	      }
 	  else

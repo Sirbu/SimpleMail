@@ -9,7 +9,12 @@ int main(){
   fgets(machine,16,stdin);
   printf("%s",machine);
   machine[15]='\0';
-  Initialisation(machine);
+
+  if(! Initialisation(machine)){// on traite le cas ou on a pas reussi la connexion au serveur
+        printf("erreur de connexion au serveur ");
+        exit(INTERN_ERROR);
+  }
+
   do{
         ret=authentification();
         if (ret!=NO_PB){
@@ -18,7 +23,10 @@ int main(){
         }
 
     }while(ret==AUTH_ERROR && choix);
+    if(ret!=NO_PB)
+      exit(AUTH_ERROR);
     /*on est authentifier et on procede a l'affichage du menu*/
+    printf("la valeur recu est %d",ret);
     while (choix){
         printf("\n*************************************************************\n");
         printf("1:quitter\n");
