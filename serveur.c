@@ -362,14 +362,18 @@ int parseLoginPass(char* requete, char* login, char* password)
 	// sur lequel on l'a placé avec strchr()
 	p_requete++;
 	// ensuite on peut lire l'utilisateur
+	printf("[+] User : %s length = %d\n", p_requete, (int)strlen(p_requete));
 	while(p_requete[i] != '/')
 	{
 		login[i] = p_requete[i++];
 	}
+	// le petit 0 qui termine la chaine
+	login[i] = '\0';
 
 	// permet de placer le pointeur p_requete
 	// sur le '/' juste avant le mot de passe
 	p_requete = strchr(p_requete, '/');
+
 
 	// on incrémente encore une fois pour
 	// qu'il se place juste après le '/'
@@ -377,7 +381,6 @@ int parseLoginPass(char* requete, char* login, char* password)
 
 	strncpy(password, p_requete, TAILLE_PASS);
 
-	printf("[+] User : %s length = %d\n", login, (int)strlen(login));
 	printf("[D] Password : %s\n", password);
 
 	return 0;
