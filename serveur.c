@@ -19,6 +19,7 @@
 
 #include <errno.h>
 
+#include <crypt.h>
 #include "serveur.h"
 
 #define TRUE 1
@@ -171,7 +172,7 @@ char *Reception() {
 		}
 		/* on a trouve ? */
 		if (trouve) {
-			message[index++] = '\n';
+			// message[index++] = '\n';
 			message[index] = '\0';
 			debutTampon++;
 			fini = TRUE;
@@ -221,15 +222,15 @@ char *Reception() {
  */
 int Emission(char *message) {
 	int taille;
-	if(strstr(message, "\n") == NULL) {
-		fprintf(stderr, "Emission, Le message n'est pas termine par \\n.\n");
+	if(strstr(message, "/;") == NULL) {
+		fprintf(stderr, "[-] Erreur : Emission, Le message n'est pas termine par \'/;\'.\n");
 	}
 	taille = strlen(message);
 	if (send(socketService, message, taille,0) == -1) {
-        perror("Emission, probleme lors du send.");
+        perror("[-] Erreur : Emission, probleme lors du send.");
         return 0;
 	}
-	printf("Emission de %d caracteres.\n", taille+1);
+	printf("[+] Emission de %d caracteres.\n", taille+1);
 	return 1;
 }
 
@@ -274,7 +275,7 @@ int EmissionBinaire(char *donnees, size_t taille) {
 	int retour = 0;
 	retour = send(socketService, donnees, taille, 0);
 	if(retour == -1) {
-		perror("Emission, probleme lors du send.");
+		perror("[-] Erreur : Emission, problème lors du send.");
 		return -1;
 	} else {
 		return retour;
@@ -300,19 +301,16 @@ void Terminaison() {
 // Permet de parser la requête pour stocker
 // les différents champs
 // retourne 0 si tout se passe bien, un code d'erreur sinon.
-int parse_type(char* requete, char* type_requete)
+int parseType(char* requete, char* type_requete)
 {
 	char* p_type = NULL; 	// pointeur qui sera placé juste après le champ type
 	int i = 0; 			   // compteur de boucle...
-	int j = 0;		  	  // deuxième compteur de boucle
 
 	if(requete == NULL)
 	{
-		fprintf(stderr, "[E] Parsing error : la chaine requête est nulle !\n");
+		fprintf(stderr, "[-] Parsing error : la chaine requête est nulle !\n");
 		return 1;
 	}
-
-	printf("[D] Request = %s\n", requete);
 
 	// si la requête n'a pas de paramètres, le type
 	// est donc la seule chose présente dans la requête
@@ -320,15 +318,14 @@ int parse_type(char* requete, char* type_requete)
 	p_type = strchr(requete, '/');
 	if(p_type == NULL)
 	{
-		fprintf(stderr, "[W] Warning : carcactère \'/\' absent de la requête\n");
+		fprintf(stderr, "[-] Warning : carcactère \'/\' absent de la requête\n");
 
-		strncpy(type_requete, requete, strlen(type_requete));
+		strncpy(type_requete, requete, TAILLE_TYPE);
 
 		return 2;
 	}
 	else
 	{
-		// sscanf(requete, "%s/", type_requete);
 		while(requete[i] != '/')
 		{
 			type_requete[i] = requete[i];
@@ -338,5 +335,122 @@ int parse_type(char* requete, char* type_requete)
 	}
 
 	return 0;	// aucune erreur
+}
 
+// retourne un code d'erreur si il y a un problème
+// et 0 sinon
+int parseLoginPass(char* requete, char* login, char* password)
+{
+	// pointeur permettant pointer différents
+	// endroits de la chaine de la requête.
+	char* p_requete = NULL;
+
+	// itérateur de boucle
+	int i = 0;
+
+	// on se place juste après le type de la requête
+	// c'est à dire juste avant le login
+	p_requete = strchr(requete, '/');
+	if(p_requete == NULL)
+	{
+		fprintf(stderr, "[-] Erreur : Aucun paramètre détecté !\n");
+		return 1;
+	}
+
+	// on incrémente d'abord p_requete
+	// pour qu'il ne soit plus sur le '/'
+	// sur lequel on l'a placé avec strchr()
+	p_requete++;
+	// ensuite on peut lire l'utilisateur
+	while(p_requete[i] != '/')
+	{
+		login[i] = p_requete[i++];
+	}
+
+	// permet de placer le pointeur p_requete
+	// sur le '/' juste avant le mot de passe
+	p_requete = strchr(p_requete, '/');
+
+	// on incrémente encore une fois pour
+	// qu'il se place juste après le '/'
+	p_requete++;
+
+	strncpy(password, p_requete, TAILLE_PASS);
+
+	printf("[+] User : %s length = %d\n", login, (int)strlen(login));
+	printf("[D] Password : %s\n", password);
+
+	return 0;
+}
+
+// vérifie les informations d'authentifcation en paramètres.
+// Attention, le mot de passe est un hash contenant l'id
+// de l'algorithme, le sel et le mot de passe. Le sel est une
+// chaine vide, et chaque champ est séparé par un '$' comme suit :
+// $id$salt$hash
+// Retourne 0 si tout s'est bien passé.
+// 1 si le login ou le mot de passe n'est pas bon
+int checkAuthentification(char* login, char* password)
+{
+	// permettra de stocker une ligne du fichier
+	char line[LINE_LENGTH];
+
+	// détermine si on a trouvé le login dans le fichier
+	int found = 0;
+
+	// pointeur placé à la jonction dans la ligne
+	// entre login et password
+	char* p_pass = NULL;
+
+	FILE* auth_file = fopen("bdd", "r");
+	if(auth_file == NULL)
+	{
+		fprintf(stderr, "[-] Error : Impossible to open the database file !\n");
+		return 1;
+	}
+
+	while(!found && fgets(line, LINE_LENGTH, auth_file) != NULL)
+	{
+		printf("[D] login = %s\nLine = %s\n", login, line);
+		if(strstr(line, login) != NULL)
+		{
+			found = 1;
+		}
+	}
+
+	if(!found)
+	{
+		// si le login n'est pas trouvé dans le fichier...
+		fprintf(stderr, "[-] Erreur : login %s introuvable !\n", login);
+		fclose(auth_file);
+		return 1;
+	}
+
+	// permet d'enlever le newline qui fait chier
+	line[strlen(line)-1] = '\0';
+
+	p_pass = strchr(line, ':');
+	if(p_pass == NULL)
+	{
+		fprintf(stderr, "[-] Erreur : Fichier d'authentification corrompu !\n");
+		fclose(auth_file);
+		exit(EXIT_FAILURE);
+	}
+
+	fclose(auth_file);
+
+	// on retourne le réultat de la comparaison
+	// du hash reçu avec celui dans le fichier
+	p_pass++;
+	printf("[D] p_pass = %s\npassword = %s\n", p_pass, password);
+	return strncmp(p_pass, password, strlen(p_pass));
+}
+
+void envoi_reponse(int code_retour)
+{
+	char message[TAILLE_REQ];
+
+	sprintf(message, "return/%d/;", code_retour);
+
+	Emission(message);
 }

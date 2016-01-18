@@ -16,7 +16,7 @@ int main()
     char type_requete[TAILLE_TYPE];
 
     // tableau vers les paramètres des requêtes
-    char parametres[NBR_PARAM][TAILLE_PARAM];
+    // char parametres[NBR_PARAM][TAILLE_PARAM];
 
     // variables d'authentification
     char login[TAILLE_LOGIN];
@@ -25,16 +25,14 @@ int main()
     // variable de condition de la boucle de connexion
     int connecte = 0;
 
-    // pointeur permettant pointer différents
-    // endroits de la chaine de la requête.
-    char* p_requete = NULL;
-
-    // itérateur de boucle
-    int i = 0;
+    // Permet de savoir si les requêtes que l'on reçoit
+    // viennent d'un utilisateur authentifié ou non.
+    // 0 si il n'est pas authentifié et 1 sinon.
+    int authentifie = 0;
 
     if(!Initialisation())
     {
-        printf("[E] Une erreur est survenue lors de l'initialisation\n");
+        printf("[-] Une erreur est survenue lors de l'initialisation\n");
         exit(1);
     }
 
@@ -42,7 +40,7 @@ int main()
     {
         if(!(connecte = AttenteClient()))
         {
-            printf("[E] Une erreur est survenue lors d'une connexion client !\n");
+            printf("[-] Erreur : la connection du client a échoué !\n");
             exit(2);
         }
 
@@ -50,50 +48,33 @@ int main()
         {
             requete = Reception();
 
-            printf("[R] Message reçu : %s\n", requete);
+            printf("[+] Message reçu : %s\n", requete);
 
             printf("[+] Analyse de la requête...\n");
-            parse_type(requete, type_requete);
+            parseType(requete, type_requete);
 
             printf("[D] type_requete : %s\n", type_requete);
 
             // choix du comportement en fonction du type de requête
-            if(!strncmp(type_requete, "authentification", strlen(type_requete)))
+            if(strncmp(type_requete, "authentification", strlen(type_requete)) == 0)
             {
                 printf("[+] Demande d'authentification !\n");
 
-                // on se place juste après le type de la requête
-                // c'est à dire juste avant le login
-                p_requete = strchr(requete, '/');
-                if(p_requete == NULL)
+                if(parseLoginPass(requete, login, password))
                 {
-                    printf("[-] Erreur : Aucun paramètre détecté !\n");
+                    fprintf(stderr, "[-] Erreur : Extraction des informations d'authentification impossible !\n");
+
+                    envoi_reponse(AUTH_ERROR);
+
                     exit(EXIT_FAILURE);
                 }
 
-                // on incrémente d'abord p_requete
-                // pour qu'il ne soit plus sur le '/'
-                // sur lequel on l'a placé avec strchr()
-                p_requete++;
-                // ensuite on peut lire l'utilisateur
-                while(p_requete[i] != '/')
+                if(checkAuthentification(login, password) == 0)
                 {
-                    login[i] = p_requete[i];
-                    i++;
+                    printf("[+] Authentification validée !\n");
+                    printf("[+] Bienvenue %s!\n", login);
+                    authentifie = 1;
                 }
-
-                // permet de placer le pointeur p_requete
-                // sur le '/' juste avant le mot de passe
-                p_requete = strchr(p_requete, '/');
-
-                // on incréente encore une fois pour
-                // qu'il se place juste après le '/'
-                p_requete++;
-                printf("[D] p_requete = %s\n", p_requete);
-
-                strncpy(password, p_requete, TAILLE_PASS);
-
-                printf("[+] User : %s\n", login);
             }
         }
 
