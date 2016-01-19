@@ -3,7 +3,6 @@
 #include <ctype.h>
 #include <string.h>
 #include <sys/types.h>
-#include <openssl/sha.h>
 #include <crypt.h>
 #ifdef WIN32
 #include <winsock2.h>
