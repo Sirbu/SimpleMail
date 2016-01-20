@@ -20,6 +20,7 @@ int main(){
         if (ret!=NO_PB){
             printf("voulez vous continuer ??? 1/yes 0/no ");
             scanf("%d",&choix);
+            getchar();
         }
 
     }while(ret==AUTH_ERROR && choix);
