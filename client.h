@@ -5,9 +5,12 @@
 #define DEL_ERROR  3
 #define READ_ERROR 4
 #define NO_PB	   5
+#define SERV_ERROR 6
 #define INTERN_ERROR 9
 #define TAILLE_REQUETTE 4096
 #define TAILLE_ID 20
+#define TAILLE_PASSWORD 200
+#define TAILLE_CONETENU 3500
 /* Initialisation.
  * Connexion au serveur sur la machine donnee.
  * Utilisez localhost pour un fonctionnement local.
@@ -49,10 +52,22 @@ int EmissionBinaire(char *donnees, size_t taille);
 /* Ferme la connexion.
  */
 void Terminaison();
-/* recupére le login et le mot de passe pour
-*authentifier le client
-ca renvoie NO_PB si tout s'est bien passé
+/*le sous programme teste les malloc teste de malloc
+ * il renvoie 0 si l'allocation s'est mal passé
 */
-int authentification();
+int teste_malloc(char *ptr);
+/* recupére le login et le mot de passe pour
+ *authentifier le client
+ *ca renvoie NO_PB si tout s'est bien passé
+ et le login de l'utilisateur en parametre
+ */
+
+int authentification(char *login);
+/*ce sous programme prend en paramettre @ de l'expediteur
+ *recuperera les champs necessaire pour l'envoie d'un message
+ *et se chargera de l'envoie
+ *renverra NO_PB si tout s'est bien passé
+*/
+void Envoyermessage(char login[]);
 
 #endif

@@ -248,53 +248,138 @@ void Terminaison() {
 	close(socketClient);
 }
 
-/*authentification
-elle retourne NO_PB si tout s'est bien passé
-un autre code sinon
+/*teste de malloc
 */
-int authentification(){
+int teste_malloc(char *ptr){
+
+	if (ptr==NULL)
+		return	0;
+	else
+		return 1;
+}
+
+
+/*authentification
+
+*/
+int authentification(char *login){
 	int code_ret;
-	char *request=(char*)malloc(TAILLE_REQUETTE);
-	if(request==NULL)
-		return(INTERN_ERROR);
-	char *login=(char*)malloc(TAILLE_ID);
-	if(login==NULL)
+	char* request=(char*)malloc(TAILLE_REQUETTE);
+
+	if ( ! teste_malloc(request) )
 		exit(INTERN_ERROR);
-	char *password=(char*)malloc(TAILLE_ID);
-	if(password==NULL)
-		exit(INTERN_ERROR);
-	int n=0;
-	int etat=1;
+
+	char password[TAILLE_PASSWORD];
 	/********************************************************/
 	printf("bienvenue sur votre messagerie\n !!");
-	printf("authentifiez vous\n !!");
+	printf("authentifiez vous!!\n");
 	printf("login: ");
 	fgets(login,TAILLE_ID,stdin);
-	login[strlen(login)-1]='/';/*elimination du retour a la ligne en le remplacant par un caracétere utile pour ma requette*/
+	login[strlen(login)-1]='\0';/*elimination du retour a la ligne*/
+
 	printf("password: ");
 	fgets(password,TAILLE_ID,stdin);
 	password[strlen(password)-1]='\0';/*elimination du retour a la ligne*/
-	/*cryptage du mot de passe avant l'envoie*/
-	 password=crypt(password,"$6$");
-	/*formulation de la requette par concatenation*/
-	strcat(request,"authentification/");
-	strcat(request,login);
-	strcat(request,password);
-	strcat(request,"/;");
 
-	/*envoie de la requette et verification du bon acheminement*/
+	/*cryptage du mot de passe avant l'envoie*/
+	strncpy(password,crypt(password,"$6$"),TAILLE_PASSWORD);
+
+	/*formulation de la requette*/
+
+	sprintf(request,"authentification/%s/%s/;",login,password);
+
+
+	/*envoie de la requette*/
 
 	Emission(request);
 
 	/*attente de la reponse*/
-	 request=Reception();
-  printf("**************%s***********\n",request);
-	 if (request!=NULL){
-			if((sscanf(request,"return/%d/;",&code_ret))!=1)
-						printf("vous n'avez pas recuperer le bon nombre de param");/*recuperation du code retour par le serveur*/
+	request=Reception();
+
+	if (request!=NULL){
+		sscanf(request,"return/%d/;",&code_ret);
 		return (code_ret);
-	      }
-	  else
-			return(INTERN_ERROR);
+    }
+	else
+		return(INTERN_ERROR);
+
+}
+/*ce sous programme prend en paramettre @ de l'expediteur
+ recuperera les champs necessaire pour l'envoie d'un message
+*/
+void Envoyermessage(char login[]){
+
+	int continuer=0;
+	char dest[TAILLE_ID];
+	char objet[TAILLE_PASSWORD];
+	char contenu[TAILLE_CONETENU];
+	char *request=(char *)malloc(TAILLE_REQUETTE);
+
+	if( ! teste_malloc(request))
+		exit(INTERN_ERROR);
+
+	int code_ret;
+
+	getchar();
+	printf("veuillez saisir l'@ destinatrice: ");
+	fgets(dest,TAILLE_ID,stdin);
+	dest[strlen(dest)-1]='\0';
+
+	printf("veuillez saisir objet: ");
+	fgets(objet,TAILLE_PASSWORD,stdin);
+	objet[strlen(objet)-1]='\0';
+
+
+	printf("veuillez saisir votre message : ");
+	fgets(contenu,TAILLE_CONETENU,stdin);
+	contenu[strlen(contenu)-1]='\0';
+	/*formulation de la requette*/
+	sprintf(request,"send/%s/%s/%s/%s/;",login,dest,objet,contenu);
+    /*envoie de la requette*/
+
+	Emission(request);
+
+	/*reception de la requette*/
+
+	request=Reception();
+
+	if (request!=NULL)
+		sscanf(request,"return/%d/;",&code_ret);
+	else
+		exit(INTERN_ERROR);
+
+	if (code_ret==SERV_ERROR){
+		printf("erreur de serveur!!! reessayer ulterieurement");
+		exit(SERV_ERROR);
+	}
+
+
+		if(code_ret== DEST_ERROR){
+
+			do{
+				printf("vous vous etes tropmé de destinataire voulez vous reessayer? o/oui n/non ");
+				continuer=fgetc(stdin);
+
+				printf(" veuillez ressaisir la bonne adresse :\n");
+				fgets(dest,TAILLE_ID,stdin);
+				dest[strlen(dest)-1]='\0';
+
+				bzero(request,TAILLE_REQUETTE);//on vide la chaine de charactere
+
+				/*formulation de la requette*/
+				sprintf(request,"send/%s/%s/%s/%s/;",login,dest,objet,contenu);
+
+				Emission(request);
+
+				request=Reception();
+
+				if (request!=NULL)
+					sscanf(request,"return/%d/;",&code_ret);
+				else
+					exit(INTERN_ERROR);
+
+			}while(continuer=='y' && code_ret!=DEST_ERROR);
+			printf("message envoyé avec succès\n");
+		}
 
 }
