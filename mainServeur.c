@@ -4,8 +4,7 @@
 
 #include "serveur.h"
 
-
-int main()
+int main(void)
 {
     // totalité de la requête (à parser)
     // c'est un char* pour être compatible
@@ -59,44 +58,26 @@ int main()
             printf("[+] Analyse de la requête...\n");
             parseType(requete, type_requete);
 
-            // printf("[D] type_requete : %s\n", type_requete);
+            printf("[D] type_requete : %s\n", type_requete);
 
-            // choix du comportement en fonction du type de requête
             if(strncmp(type_requete, "authentification", strlen(type_requete)) == 0)
             {
                 printf("[+] Demande d'authentification !\n");
 
-                if(parseLoginPass(requete, login, password))
-                {
-                    fprintf(stderr, "[-] Erreur : Extraction des informations d'authentification impossible !\n");
+                authentifie = authentification(requete, login, password);
+            }
+            else if(strncmp(type_requete, "send", strlen(type_requete)) == 0)
+            {
+                printf("[+] Demande d'envoi d'un message !\n");
 
-                    envoi_reponse(AUTH_ERROR);
-
-                    exit(EXIT_FAILURE);
-                }
-
-                if(checkAuthentification(login, password) == 0)
-                {
-                    printf("[+] Authentification validée !\n");
-                    printf("[+] Bienvenue %s!\n", login);
-
-                    envoi_reponse(NO_PB);
-
-                    authentifie = 1;
-                }
-                else
-                {
-                    printf("[+] Authentification refusée !\n");
-                    printf("[+] Dégage %s!\n", login);
-
-                    envoi_reponse(AUTH_ERROR);
-                }
+                sendMessage(requete);
             }
             else
             {
                 printf("[+] Erreur : trame non reconnue !\n");
                 envoi_reponse(SERV_ERROR);
             }
+
         }
 
     }

@@ -1,6 +1,7 @@
 #ifndef __SERVEUR_H__
 #define __SERVEUR_H__
 
+
 /** Définition des codes de retour **/
 #define AUTH_ERROR  1
 #define DEST_ERROR  2
@@ -10,17 +11,35 @@
 #define SERV_ERROR  6
 
 
-#define TAILLE_REQ  4096
-#define TAILLE_TYPE 512
+#define TAILLE_REQ      4096        // Taille max d'une requête
+
+#define TAILLE_MESS     3500        // Taille max d'un message (le contenu)
+
+#define TAILLE_TYPE     512         // Taille max du type de la requête
+
+#define TAILLE_OBJ      50          // Taille max du l'objet du message
 
 // doit être long car le mot de passe reçu est un hash SHA512
-#define TAILLE_PASS     500
-#define TAILLE_LOGIN    20
+#define TAILLE_PASS         500
+#define TAILLE_LOGIN        20
+
+#define TAILLE_FILENAME     50      // taille max du nom d'un fichier message
 
 // taille du tableau de lecture d'une ligne
 // du fichier d'authentification
 #define LINE_LENGTH     200
 
+// structure décrivant un message
+typedef struct mess
+{
+    int lu;                         // 1 si lu, 0 sinon
+
+    char src[TAILLE_LOGIN];        // Expéditeur du message
+    char dest[TAILLE_LOGIN];      // Destinataire du message
+    char obj[TAILLE_OBJ];        // Objet du message
+    char mess[TAILLE_MESS];     // Contenu du message
+
+}Message;
 
 // #define TAILE_BUFFER    4096
 
@@ -85,10 +104,37 @@ int parseType(char* requete, char* type_requete);
 int parseLoginPass(char* requete, char* login, char* password);
 
 // vérifie les informations d'authentification
-int checkAuthentification(char* login, char* password);
+int checkCredentials(char* login, char* password);
 
 // envoie une réponse avec l'un des codes de retour
 void envoi_reponse(int code_retour);
+
+// Gère la totalité de l'authentification
+int authentification(char* requete, char* login, char* password);
+
+// Parse une requête d'envoi de message.
+// Extrait source, destinataire, objet, contenu, message
+// retourne un message d'erreur au client si cela se passe mal
+// renvoie 1 si il y a une erreur, 0 sinon
+int parseMessage(char* requete, Message* mail);
+
+// gère la réception de messages
+int sendMessage(char* requete);
+
+// vérifie l'exsitence du destinataire donné
+// en paramètre
+int checkDest(char* destinataire);
+
+
+/********************
+ * Fonctions Message
+ *******************/
+Message* createMessage();
+
+int lireMessage(Message* mail, char* fichier);
+int ecrireMessage(Message* mail, char* fichier);
+
+void afficherMessage(Message* mail);
 
 
 #endif
