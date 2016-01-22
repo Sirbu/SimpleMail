@@ -19,7 +19,12 @@
 
 #include <errno.h>
 
+/**** Includes personnels ****/
 #include <crypt.h>
+#include <dirent.h>
+#include <time.h>
+#include <sys/stat.h>
+
 #include "serveur.h"
 
 #define TRUE 1
@@ -365,10 +370,11 @@ int parseLoginPass(char* requete, char* login, char* password)
 	// sur lequel on l'a placé avec strchr()
 	p_requete++;
 	// ensuite on peut lire l'utilisateur
-	printf("[D] User : %s length = %d\n", p_requete, (int)strlen(p_requete));
+	// printf("[D] User : %s length = %d\n", p_requete, (int)strlen(p_requete));
 	while(p_requete[i] != '/')
 	{
-		login[i] = p_requete[i++];
+		login[i] = p_requete[i];
+		i++;
 	}
 	// le petit 0 qui termine la chaine
 	login[i] = '\0';
@@ -396,7 +402,7 @@ int parseLoginPass(char* requete, char* login, char* password)
 // $id$salt$hash
 // Retourne 0 si tout s'est bien passé.
 // 1 si le login ou le mot de passe n'est pas bon
-int checkAuthentification(char* login, char* password)
+int checkCredentials(char* login, char* password)
 {
 	// permettra de stocker une ligne du fichier
 	char line[LINE_LENGTH];
@@ -452,13 +458,364 @@ int checkAuthentification(char* login, char* password)
 	return strncmp(p_pass, password, strlen(p_pass));
 }
 
+// envoie une réponse contenant le code donné
+// en paramètre
 void envoi_reponse(int code_retour)
 {
 	char message[TAILLE_REQ];
 
 	sprintf(message, "return/%d/;", code_retour);
 
-	printf("[D] return request : %s\n", message);
+	// printf("[D] return request : %s\n", message);
 
 	Emission(message);
+}
+
+// Gère toute la vérification de la demande
+// de connexion
+int authentification(char* requete, char* login, char* password)
+{
+	if(parseLoginPass(requete, login, password))
+	{
+		fprintf(stderr, "[-] Erreur : Extraction des informations d'authentification impossible !\n");
+
+		envoi_reponse(AUTH_ERROR);
+
+		exit(EXIT_FAILURE);
+	}
+
+	if(checkCredentials(login, password) == 0)
+	{
+		printf("[+] Authentification validée !\n");
+		printf("[+] Bienvenue %s!\n", login);
+
+		envoi_reponse(NO_PB);
+		// est authentifié
+		return 1;
+	}
+	else
+	{
+		printf("[+] Authentification refusée !\n");
+		printf("[+] Dégage %s!\n", login);
+		// n'est pas authentifié
+		envoi_reponse(AUTH_ERROR);
+
+		return 0;
+	}
+}
+
+
+/************************************
+ * Cette fonction pourrait être bien plus élégante qu'elle ne l'est.
+ * En utilisant une sous fonction ou des tableaux dynamiques pour
+ * les paramètres par exemple. Poour l'instant je choisi la simplicitié
+ ************************************/
+// Parse une requête d'envoi de message.
+// Extrait source, destinataire, objet, contenu, message
+// retourne un message d'erreur au client si cela se passe mal
+// renvoie 1 si il y a une erreur, 0 sinon
+// NB: vérifier le nombre de paramètres un peu mieux que ça.
+int parseMessage(char* requete, Message* mail)
+{
+	// pointeur qui va se situer successivement sur les '/'
+	// séparant les paramètres de la requête. Il permettra
+	// de le se situer juste avant un paramètre pour pouvoir l'extraire
+	char* p_requete = NULL;
+	int i = 0; 	// itérateur de boucle
+
+	// extraction de la source
+	p_requete = strchr(requete, '/');
+	if(p_requete == NULL)
+	{
+		printf("[-] Erreur : Il manque un paramètre !\n");
+		envoi_reponse(DEST_ERROR);
+		return 1;
+	}
+	p_requete++;
+	while(p_requete[i] != '/')
+	{
+		mail->src[i] = p_requete[i];
+		i++;
+	}
+	mail->src[i] = '\0';
+	i = 0;
+
+	// extraction du destinataire
+	p_requete = strchr(p_requete, '/');
+	if(p_requete == NULL)
+	{
+		printf("[-] Erreur : Il manque un paramètre !\n");
+		envoi_reponse(DEST_ERROR);
+		return 1;
+	}
+	p_requete++;
+	while(p_requete[i] != '/')
+	{
+		mail->dest[i] = p_requete[i];
+		i++;
+	}
+	mail->dest[i] = '\0';
+	i = 0;
+
+	// extraction de l'objet
+	p_requete = strchr(p_requete, '/');
+	if(p_requete == NULL)
+	{
+		printf("[-] Erreur : Il manque un paramètre !\n");
+		envoi_reponse(DEST_ERROR);
+		return 1;
+	}
+	p_requete++;
+	while(p_requete[i] != '/')
+	{
+		mail->obj[i] = p_requete[i];
+		i++;
+	}
+	mail->obj[i] = '\0';
+	i = 0;
+
+	// extraction du message
+	p_requete = strchr(p_requete, '/');
+	if(p_requete == NULL)
+	{
+		printf("[-] Erreur : Il manque un paramètre !\n");
+		envoi_reponse(DEST_ERROR);
+		return 1;
+	}
+	p_requete++;	// on se positionne sur le début du message
+	strncpy(mail->mess, p_requete, TAILLE_MESS);
+
+	// j'enlève le '/;' à la fin
+	mail->mess[strlen(mail->mess)-2] = '\0';
+
+	return 0;
+}
+
+// permet d'extraire un paramètre, pointé par
+// p_start. Il sera retourné comme un char*
+// Cette fonction ne pourra pas être utilisée
+// pour extraire le contenu du message, car elle
+// se base sur la présence de '/' entre les paramètres.
+// Et c'est un caractère qui peut se retrouver dans le contenu
+// char* parseParam(char* requete, char* p_start)
+// {
+// 	int i = 0;
+//
+// 	// chaine qui sera retournée grâce à strdup()
+// 	char param[TAILLE_PARAM];
+//
+// 	// boucle jusqu'a ce que p_param = NULL
+// 	// Mais vérification de sa nullité dans le corps
+// 	// de boucle au cas ou on ne trouve pas de '/'
+//
+// 	while(p_requete[i] != '/')
+// 	{
+// 		param[i] = p_requete[i++];
+// 	}
+// 	param[i] = '\0';
+//
+// 	return strdup(param);
+// }
+
+
+// Prend en paramètre la requête demandant
+// l'envoi d'un message, et va stocker le dit
+// message dans la boite mail du destinataire
+// Retourne un code d'erreur si problème, sinon 0
+int sendMessage(char* requete)
+{
+	// identifcateur du fichier message
+	FILE* fichier_mess = NULL;
+
+	int ret = 0; 		// retour de fonction fwrite
+
+	// chaine contenant le nom du fichier message
+	char filename[TAILLE_FILENAME];
+
+	char* c_time_string = NULL;
+
+	Message* mail = createMessage();
+
+	mail->lu = 0;	// ce message n'est pas encore lu
+
+	parseMessage(requete, mail);
+
+	afficherMessage(mail);
+
+	// vérification de l'existence du destinataire
+	if(checkDest(mail->dest) == 0)
+	{
+		envoi_reponse(DEST_ERROR);
+		return DEST_ERROR;
+	}
+
+	// chaque boite mail (dossier) porte le nom
+	// du compte associé
+	// QUESTION : -1 c'est ok comme preuve que
+	// le dossier n'existe pas ?
+
+	if(access(mail->dest, F_OK) == -1)
+	{
+		printf("[-] Warning : Aucune boite mail détecté pour %s !\n", mail->dest);
+		printf("[+] Création de la boite mail...\n");
+		if(mkdir(mail->dest, 0700) == -1)
+		{
+			printf("[-] Erreur : impossible de créer la boite mail pour %s\n", mail->dest);
+			perror(mail->dest);
+			envoi_reponse(SERV_ERROR);
+			return SERV_ERROR;
+		}
+	}
+
+	// Le nom relatif de fichier sera composé du nom
+	// de la boite mail (dossier) ainsi que du nom du
+	// du fichier message (nom de l'expéditeur + date expédition)
+
+	// générer la date d'envoi
+
+	strncpy(filename, mail->dest, TAILLE_FILENAME);
+	filename[strlen(filename)] = '/';
+	strcat(filename, mail->src);
+
+	printf("[D] filename = %s\n", filename);
+
+	fichier_mess = fopen(filename, "w");
+	if(fichier_mess == NULL)
+	{
+		fprintf(stderr, "[-] Erreur : Ouverture en écriture du fichier message impossible !\n");
+		envoi_reponse(SERV_ERROR);
+		return SERV_ERROR;
+	}
+
+	// if((ret = fwrite(mail, sizeof(Message), 1, fichier_mess)) != 1)
+	// {
+	// 	fprintf(stderr, "[-] Erreur : problème lors de l'écriture !\n");
+	// 	perror(filename);
+	// 	envoi_reponse(SERV_ERROR);
+	// 	return SERV_ERROR;
+	// }
+
+	ret = fprintf(fichier_mess, "%d\n%s\n%s\n%s\n%s\n", mail->lu, mail->src, mail->dest, mail->obj, mail->mess);
+
+	printf("[D] Retour fprintf = %d\n", ret);
+
+	envoi_reponse(NO_PB);
+
+	fclose(fichier_mess);
+
+	return 0;
+}
+
+// retoune un code d'erreur si problème
+// 0 si le destinataire n'existe pas
+// 1 si il existe
+int checkDest(char* destinataire)
+{
+	// ligne lue dans le fichier d'authentification
+	char line[500];
+
+	// 0 si le destinataire n'existe pas
+	// et 1 sinon
+	int existe = 0;
+
+	FILE* auth_file = fopen("bdd", "r");
+	if(auth_file == NULL)
+	{
+		fprintf(stderr, "[-] Erreur : Carnet d'addresses inaccessible !\n");
+		envoi_reponse(SERV_ERROR);
+		return SERV_ERROR;
+	}
+
+	// tant qu'on est pas à la fin du fichier ou que existe
+	while(fgets(line, 500, auth_file) != NULL && existe != 1)
+	{
+		if(strstr(line, destinataire) != NULL)
+		{
+			existe = 1;
+		}
+	}
+
+	return existe;
+}
+
+
+/*********************
+ * Fonctions ayant rapport avec Message
+ * Je les mets ici car je n'ai pas réussi à me
+ * débrouiller avec les multiples inclusions bouclées
+ * que provoquaient la présence de mail.c et mail.h
+ *********************/
+
+ // retourne un pointeur pointant
+ // sur une zone allouée ayant la taille
+ // d'un message
+ Message* createMessage()
+ {
+	Message* m = malloc(sizeof(Message));
+	if(m == NULL)
+	{
+		fprintf(stderr, "[-] Erreur : Malloc  message !\n");
+		exit(EXIT_FAILURE);
+	}
+
+    return m;
+ }
+
+// Lit le message contenu dans le fichier donné en paramètre.
+// et le stocke dans la structure Message pointée par mail
+// Retourne un code d'erreur si il y en a une. 0 sinon
+int lireMessage(Message* mail, char* fichier)
+{
+	FILE* fic = fopen(fichier, "r");
+	if(fic == NULL)
+	{
+		printf("[-] Erreur : fichier mail %s introuvable !\n", fichier);
+		envoi_reponse(DEST_ERROR);
+		return(DEST_ERROR);
+	}
+
+	while(!feof(fic))
+	{
+		// j'ai du mal à savoir si le choix
+		// taille/nbr_elmts est judicieux
+		// Je voudrais lire la totalité du fichier, dont je ne
+		// connais pas la taille, et le stocker dans la structure.
+		// Les données sont ordonnées comme il le faut.
+		if(fread(mail, 1, 1, fic))
+		{
+			perror("[-] Erreur lecture");
+			return SERV_ERROR;
+		}
+	}
+
+	return 0;
+}
+
+int ecrireMessage(Message* mail, char* fichier)
+{
+	FILE* fic = fopen(fichier, "w");
+	if(fic == NULL)
+	{
+		printf("[-] Erreur : fichier mail %s introuvable !\n", fichier);
+		envoi_reponse(DEST_ERROR);
+		return(DEST_ERROR);
+	}
+
+	if(fwrite(mail, sizeof(Message), 1, fic))
+	{
+		perror("[-] Erreur écriture");
+		return SERV_ERROR;
+	}
+
+	return 0;
+}
+
+void afficherMessage(Message* mail)
+{
+	printf("[+] Affichage des informations du message :\n");
+	printf(" -> Lu : %d\n", mail->lu);
+	printf(" -> Source : %s\n", mail->src);
+	printf(" -> Destinataire : %s\n", mail->dest);
+	printf(" -> Objet : %s\n", mail->obj);
+	printf(" -> Contenu : %s\n", mail->mess);
 }
