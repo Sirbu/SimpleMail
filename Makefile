@@ -1,10 +1,10 @@
 CC = gcc
-CFLAGS = -Wall
+CFLAGS = -Wall -g -O3
 
 all: Serveur Client
 
 clean:
-	rm -Rf *.o Client Serveur
+	rm -Rf *.o *.out Client Serveur
 
 ### Compilation des fichiers du serveur ###
 Serveur: mainServeur.o serveur.o
@@ -25,4 +25,3 @@ mainClient.o: mainClient.c
 
 client.o:
 	$(CC) $(CFLAGS) -c client.c -o client.o
-			

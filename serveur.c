@@ -632,7 +632,11 @@ int sendMessage(char* requete)
 	// chaine contenant le nom du fichier message
 	char filename[TAILLE_FILENAME];
 
-	char* c_time_string = NULL;
+	// variables permettant de stocker la date de l'envoi.
+	// La date sera utilisée pour rendre unique le nom d'un
+	// fichier
+	time_t current_time;
+	struct tm* c_time_struct = NULL;
 
 	Message* mail = createMessage();
 
@@ -651,9 +655,9 @@ int sendMessage(char* requete)
 
 	// chaque boite mail (dossier) porte le nom
 	// du compte associé
-	// QUESTION : -1 c'est ok comme preuve que
-	// le dossier n'existe pas ?
-
+	// on vérifie donc si le dossier correspondant
+	// au destinataire existe
+	// sinon il faut le créer.
 	if(access(mail->dest, F_OK) == -1)
 	{
 		printf("[-] Warning : Aucune boite mail détecté pour %s !\n", mail->dest);
@@ -672,10 +676,20 @@ int sendMessage(char* requete)
 	// du fichier message (nom de l'expéditeur + date expédition)
 
 	// générer la date d'envoi
+	current_time = time(NULL);
+	c_time_struct = localtime(&current_time);
+	// printf("TIME : %d-%d-%d_%d-%d\n", c_time_struct->tm_mday,
+	// 	c_time_struct->tm_mon, c_time_struct->tm_year, c_time_struct->tm_hour,
+	// 	c_time_struct->tm_min);
+
 
 	strncpy(filename, mail->dest, TAILLE_FILENAME);
 	filename[strlen(filename)] = '/';
 	strcat(filename, mail->src);
+	// écriture de la date dans le nom du fichier
+	sprintf(filename+strlen(filename), "_%d-%d-%d_%d-%d-%d", c_time_struct->tm_mday,
+		c_time_struct->tm_mon, c_time_struct->tm_year, c_time_struct->tm_hour,
+		c_time_struct->tm_min, c_time_struct->tm_sec);
 
 	printf("[D] filename = %s\n", filename);
 
