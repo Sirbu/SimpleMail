@@ -247,15 +247,24 @@ int EmissionBinaire(char *donnees, size_t taille) {
 void Terminaison() {
 	close(socketClient);
 }
-
+/*vider le buffer
+*/
+void viderBuffer()
+{
+    int c = 0;
+    while (c != '\n' && c != EOF)
+    {
+        c = getchar();
+    }
+}
 /*teste de malloc
 */
-int teste_malloc(char *ptr){
+void teste_malloc(char *ptr){
 
-	if (ptr==NULL)
-		return	0;
-	else
-		return 1;
+	if (ptr==NULL){
+		printf("une erreur s'est produite!!! erreur de memoire\n");
+		exit(INTERN_ERROR);
+	}
 }
 
 
@@ -266,21 +275,21 @@ int authentification(char *login){
 	int code_ret;
 	char* request=(char*)malloc(TAILLE_REQUETTE);
 
-	if ( ! teste_malloc(request) )
-		exit(INTERN_ERROR);
+	teste_malloc(request);
 
-	char password[TAILLE_PASSWORD];
+	char * password=(char*)malloc(TAILLE_PASSWORD);
+	teste_malloc(password);
 	/********************************************************/
+
 	printf("bienvenue sur votre messagerie\n !!");
 	printf("authentifiez vous!!\n");
 	printf("login: ");
 	fgets(login,TAILLE_ID,stdin);
 	login[strlen(login)-1]='\0';/*elimination du retour a la ligne*/
-
 	printf("password: ");
 	fgets(password,TAILLE_ID,stdin);
 	password[strlen(password)-1]='\0';/*elimination du retour a la ligne*/
-
+	//password = getpass("password:");
 	/*cryptage du mot de passe avant l'envoie*/
 	strncpy(password,crypt(password,"$6$"),TAILLE_PASSWORD);
 
@@ -290,6 +299,7 @@ int authentification(char *login){
 
 
 	/*envoie de la requette*/
+	printf("la requette %s\n",request);
 
 	Emission(request);
 
@@ -315,12 +325,12 @@ void Envoyermessage(char login[]){
 	char contenu[TAILLE_CONETENU];
 	char *request=(char *)malloc(TAILLE_REQUETTE);
 
-	if( ! teste_malloc(request))
-		exit(INTERN_ERROR);
+ 	teste_malloc(request);
+
 
 	int code_ret;
 
-	getchar();
+	viderBuffer();
 	printf("veuillez saisir l'@ destinatrice: ");
 	fgets(dest,TAILLE_ID,stdin);
 	dest[strlen(dest)-1]='\0';
@@ -382,4 +392,68 @@ void Envoyermessage(char login[]){
 			printf("message envoyé avec succès\n");
 		}
 
+}
+/*deconnexion
+*/
+void deconnexion(){
+
+	char *request=(char*)malloc(TAILLE_REQUETTE);
+	teste_malloc(request);
+	strcat(request,"disc/;");
+	Emission(request);
+}
+
+/*le sous programme se chargera
+ *d'envoyer une requette au serveur pour savoir si
+ * il y'a eu des nouveaux messages ou pas
+*/
+
+void check(){
+
+	char*request=(char*)malloc(TAILLE_REQUETTE);
+	teste_malloc(request);
+	int code_ret;
+	strcat(request,"check/;");
+	Emission(request);
+
+	request = Reception();
+
+	if (request!=NULL){
+
+		sscanf(request,"check/%d/;",&code_ret);
+
+    }
+	else
+		exit(INTERN_ERROR);
+
+
+	printf("vous avez %d nouveaux message\n",code_ret);
+}
+/*affiche le menu principale
+*/
+void afficher_menu1(){
+	printf("*************************************************************\n");
+	printf("a:deconnexion\n");
+	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
+	printf("b:envoyer un message \n");
+	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
+	printf("c:consulter vos messages\n");
+	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
+	printf("en attente de votre choix: ");
+}
+/*affiche le menu secondaire
+*/
+void afficher_menu2(){
+	printf("\n*************************************************************\n");
+	printf("d:ya t-il des nouveaux message ?\n");
+	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
+	printf("e:liste des nouveaux messages \n");
+	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
+	printf("f:lire un message \n");
+	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
+	printf("g:liste de tout les messages \n");
+	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
+	printf("h:retourner au menu d'avant \n");
+	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
+	printf("en attente de votre choix: ");
 }
