@@ -62,15 +62,31 @@ int main(void)
 
             if(strncmp(type_requete, "authentification", strlen(type_requete)) == 0)
             {
-                printf("[+] Demande d'authentification !\n");
+                printf("[+] Demande d'authentification\n");
 
                 authentifie = authentification(requete, login, password);
             }
             else if(strncmp(type_requete, "send", strlen(type_requete)) == 0)
             {
-                printf("[+] Demande d'envoi d'un message !\n");
+                printf("[+] Demande d'envoi d'un message\n");
 
-                sendMessage(requete);
+                if(sendMessage(requete) == SERV_ERROR)
+                {
+                    printf("[-] Exiting !\n");
+                    exit(EXIT_FAILURE);
+                }
+            }
+            else if(strncmp(type_requete, "check", strlen(type_requete)) == 0)
+            {
+                printf("[+] Demande du nombre de messages non lus\n");
+
+                checkNewMessages(login);
+            }
+            else if(strncmp(type_requete, "list", strlen(type_requete)) == 0)
+            {
+                printf("[+] Demande de listing\n");
+
+                listMessages(requete);
             }
             else
             {

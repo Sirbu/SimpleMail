@@ -125,6 +125,17 @@ int sendMessage(char* requete);
 // en paramètre
 int checkDest(char* destinataire);
 
+// retourne le nombre de messages non lus
+// et envoie la même valeur au client
+int checkNewMessages(char* login);
+
+// Envoie au client les en têtes des
+// messages (tous ou seulement non lus)
+// avec une requête par message, plus une
+// requête informative au début, permettant
+// au client de savoir combien de requêtes de
+// réponse li doit attendre
+int listMessages(char* requete);
 
 /********************
  * Fonctions Message

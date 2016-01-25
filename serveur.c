@@ -678,10 +678,6 @@ int sendMessage(char* requete)
 	// générer la date d'envoi
 	current_time = time(NULL);
 	c_time_struct = localtime(&current_time);
-	// printf("TIME : %d-%d-%d_%d-%d\n", c_time_struct->tm_mday,
-	// 	c_time_struct->tm_mon, c_time_struct->tm_year, c_time_struct->tm_hour,
-	// 	c_time_struct->tm_min);
-
 
 	strncpy(filename, mail->dest, TAILLE_FILENAME);
 	filename[strlen(filename)] = '/';
@@ -691,7 +687,7 @@ int sendMessage(char* requete)
 		c_time_struct->tm_mon, c_time_struct->tm_year, c_time_struct->tm_hour,
 		c_time_struct->tm_min, c_time_struct->tm_sec);
 
-	printf("[D] filename = %s\n", filename);
+	// printf("[D] filename = %s\n", filename);
 
 	fichier_mess = fopen(filename, "w");
 	if(fichier_mess == NULL)
@@ -752,6 +748,81 @@ int checkDest(char* destinataire)
 	return existe;
 }
 
+// compte le nombre de messages non lus
+// et envoie le résultat au client
+int checkNewMessages(char* login)
+{
+	int nbr_mess = 0;
+	char lu = -1;			// 0 si le message courant est nouveau, 1 sinon
+
+	char reponse[TAILLE_REQ];
+
+	// représente l'élément courant dans le dossier
+	struct dirent* fichier_courant = NULL;
+
+	// déscripteur du fichier à ouvrir pour
+	// vérifier si il a été lu ou pas
+	FILE* fic = NULL;
+
+	DIR* boite_mail = opendir(login);
+	if (boite_mail == NULL) {
+		printf("[-] Warning : Boite mail inaccessible !\n");
+		// si il n'y a pas de boite mail, l'utilisateur
+		// n'a pas encore reçu de messages.
+		// ATTENTION: l'erreur pourrait peut être
+		// signifier autre chose...
+		Emission("check/0/;");
+		return 0;
+	}
+
+	while((fichier_courant = readdir(boite_mail)) != NULL)
+	{
+		// si on est pas sur le dossier courant ou parent...
+		if(strncmp(fichier_courant->d_name, ".", 1) != 0
+			&& strncmp(fichier_courant->d_name, "..", 1) != 0)
+		{
+			fic = fopen(fichier_courant->d_name, "r");
+			if(fic == NULL)
+			{
+				fprintf(stderr, "[-] Erreur : fichier %s inaccessible\n",
+					fichier_courant->d_name);
+				// envoi_reponse(SERV_ERROR);
+			}
+			else
+			{
+				if(fread(&lu, 1, 1, fic) != 1)
+				{
+					fprintf(stderr, "[-] Erreur : Lecture du fichier %s impossible\n",
+						fichier_courant->d_name);
+				}
+				fclose(fic);
+				// a tester !
+				lu?:nbr_mess++;
+			}
+
+		}
+	}
+
+	sprintf(reponse, "check/%d/;", nbr_mess);
+	Emission(reponse);
+
+	return 0;
+}
+
+// Envoie au client les en têtes des
+// messages (tous ou seulement non lus)
+// avec une requête par message, plus une
+// requête informative au début, permettant
+// au client de savoir combien de requêtes de
+// réponse li doit attendre
+int listMessages(char* requete)
+{
+	// contiendra le type de la demande
+	// de listing. Soit all soit new.
+	char* param = NULL;
+
+	
+}
 
 /*********************
  * Fonctions ayant rapport avec Message
