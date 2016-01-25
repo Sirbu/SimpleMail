@@ -86,7 +86,7 @@ int main(void)
             {
                 printf("[+] Demande de listing\n");
 
-                listMessages(requete);
+                listMessages(requete, login);
             }
             else
             {

@@ -745,6 +745,8 @@ int checkDest(char* destinataire)
 		}
 	}
 
+	fclose(auth_file);
+
 	return existe;
 }
 
@@ -757,6 +759,11 @@ int checkNewMessages(char* login)
 
 	char reponse[TAILLE_REQ];
 
+	// nom des fichiers messages à ouvrir
+	// Attention, les fichiers sont dans le
+	// dossier portant le nom du login
+	char filename[100];
+
 	// représente l'élément courant dans le dossier
 	struct dirent* fichier_courant = NULL;
 
@@ -765,7 +772,8 @@ int checkNewMessages(char* login)
 	FILE* fic = NULL;
 
 	DIR* boite_mail = opendir(login);
-	if (boite_mail == NULL) {
+	if (boite_mail == NULL)
+	{
 		printf("[-] Warning : Boite mail inaccessible !\n");
 		// si il n'y a pas de boite mail, l'utilisateur
 		// n'a pas encore reçu de messages.
@@ -781,23 +789,30 @@ int checkNewMessages(char* login)
 		if(strncmp(fichier_courant->d_name, ".", 1) != 0
 			&& strncmp(fichier_courant->d_name, "..", 1) != 0)
 		{
-			fic = fopen(fichier_courant->d_name, "r");
+
+			sprintf(filename, "%s/%s", login, fichier_courant->d_name);
+
+			fic = fopen(filename, "r");
 			if(fic == NULL)
 			{
 				fprintf(stderr, "[-] Erreur : fichier %s inaccessible\n",
-					fichier_courant->d_name);
+					filename);
 				// envoi_reponse(SERV_ERROR);
 			}
 			else
 			{
 				if(fread(&lu, 1, 1, fic) != 1)
 				{
-					fprintf(stderr, "[-] Erreur : Lecture du fichier %s impossible\n",
-						fichier_courant->d_name);
+					fprintf(stderr,	"[-] Erreur : Lecture de %s impossible\n",
+						filename);
 				}
+
 				fclose(fic);
-				// a tester !
-				lu?:nbr_mess++;
+
+				if(lu == '0')
+				{
+					printf("[+] Messages non lus : %d\r", ++nbr_mess);
+				}
 			}
 
 		}
@@ -805,6 +820,8 @@ int checkNewMessages(char* login)
 
 	sprintf(reponse, "check/%d/;", nbr_mess);
 	Emission(reponse);
+
+	closedir(boite_mail);
 
 	return 0;
 }
@@ -815,13 +832,127 @@ int checkNewMessages(char* login)
 // requête informative au début, permettant
 // au client de savoir combien de requêtes de
 // réponse li doit attendre
-int listMessages(char* requete)
+/******************************************
+ * Pourrait être opti enne faisant qu'une *
+ * seule boucle... À réfléchir...		  *
+ ******************************************/
+int listMessages(char* requete, char* login)
 {
 	// contiendra le type de la demande
 	// de listing. Soit all soit new.
-	char* param = NULL;
+	char param[5];
 
-	
+	// requête de réponse
+	char reponse[TAILLE_REQ];
+
+	// pointeur permettant de se balader sur la requete
+	char* p_requete = NULL;
+
+	// Octet qui sera lu pour savoir si le message
+	// a été déjà lu. Il se trouve au début du fichier
+	// 0 si il n'est pas encore lu, 1 sinon.
+	char lu = -1;
+
+	// représente le dossier
+	DIR* boite_mail = NULL;
+
+	// représente l'élément courant du dossier
+	struct dirent* fichier_mess = NULL;
+	// le descripteur du fichier, permettant sa lecture
+	FILE* message = NULL;
+
+	// Contient le détail du message
+	Message* mail = createMessage();
+
+	int i = 0;		// compteur de boucle
+	int nbr_new_messages = 0;		// nombre de messages non lus
+	int nbr_messages = 0;		   // nombre de messages au total
+
+	p_requete = strstr(requete, "/");
+	if(p_requete == NULL)
+	{
+		fprintf(stderr, "[-] Erreur : Paramètre manquant !\n");
+		envoi_reponse(SERV_ERROR);
+		return SERV_ERROR;
+	}
+
+	p_requete++;
+	while(p_requete[i] != '/' && i < 5)
+	{
+		param[i] = p_requete[i];
+		i++;
+	}
+	param[i] = '\0';
+
+	printf("[D] PARAM : %s\n", param);
+
+	boite_mail = opendir(login);
+	if(boite_mail == NULL)
+	{
+		fprintf(stderr, "[-] Warning : Boite mail introuvable\n[-] Aucun message\n");
+		strncpy(reponse, "info/0/;", TAILLE_REQ);
+		Emission(reponse);
+		return 0;
+	}
+
+	// boucle de parcours des messages
+	while((fichier_mess = readdir(boite_mail)) != NULL)
+	{	// on ne traite pas le dossier courant et le dossier parent
+		// peut être faudra t'il tester si ce sotn bien des fichiers...
+		if((strncmp(fichier_mess->d_name, ".", 1) != 0)
+			&& (strncmp(fichier_mess->d_name, "..", 2) != 0))
+		{
+			message = fopen(fichier_mess->d_name, "r");
+			if (message == NULL) {
+				fprintf(stderr, "[-] Erreur : Fichier %s inaccessible\n", fichier_mess->d_name);
+				envoi_reponse(SERV_ERROR);
+				return SERV_ERROR;
+			}
+
+			if(fread(&lu, 1, 1, message) != 1)
+			{
+				fprintf(stderr, "[-] Erreur : lecture impossible !\n");
+				envoi_reponse(SERV_ERROR);
+				return SERV_ERROR;
+			}
+
+			// si on veut compter le nombre de messages non lus
+			// et
+			// que le message que l'on vient de lire n'a pas été lu
+			if((strncmp(param, "new", 3) == 0) && (lu = 0))
+			{
+				nbr_new_messages++;
+			}
+
+			nbr_messages++;
+		}
+	}
+
+	if(strncmp(param, "new", 3) == 0)
+	{
+		sprintf(reponse, "info/%d/;", nbr_new_messages);
+	}
+	else
+	{
+		sprintf(reponse, "info/%d/;", nbr_messages);
+	}
+
+	// Émission de la première trame d'informations
+	// On prévient le client du nombre de requêtes
+	// à venir
+	Emission(reponse);
+
+	// remet la position courante sur le premier élement
+	rewinddir(boite_mail);
+
+
+	// lireMessage(mail, )
+
+
+	closedir(boite_mail);
+
+	return 0;
+
 }
 
 /*********************

@@ -135,7 +135,7 @@ int checkNewMessages(char* login);
 // requête informative au début, permettant
 // au client de savoir combien de requêtes de
 // réponse li doit attendre
-int listMessages(char* requete);
+int listMessages(char* requete, char* login);
 
 /********************
  * Fonctions Message
