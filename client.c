@@ -257,6 +257,7 @@ void viderBuffer()
         c = getchar();
     }
 }
+
 /*teste de malloc
 */
 void teste_malloc(char *ptr){
@@ -312,7 +313,7 @@ int authentification(char *login){
     }
 	else
 		return(INTERN_ERROR);
-
+	free(request);//liberation de la memoire allouée
 }
 /*ce sous programme prend en paramettre @ de l'expediteur
  recuperera les champs necessaire pour l'envoie d'un message
@@ -391,7 +392,7 @@ void Envoyermessage(char login[]){
 			}while(continuer=='y' && code_ret!=DEST_ERROR);
 			printf("message envoyé avec succès\n");
 		}
-
+		free(request);//liberation de la memoire allouée
 }
 /*deconnexion
 */
@@ -401,6 +402,9 @@ void deconnexion(){
 	teste_malloc(request);
 	strcat(request,"disc/;");
 	Emission(request);
+	printf("***************************\n vous ete maintenant deconnécté ,à bientot\n***************************\n");
+
+	free(request);//liberation de la memoire allouée
 }
 
 /*le sous programme se chargera
@@ -414,13 +418,14 @@ void check(){
 	teste_malloc(request);
 	int code_ret;
 	strcat(request,"check/;");
-	Emission(request);
+
+	Emission(request);//envoie de la requette
 
 	request = Reception();
 
 	if (request!=NULL){
 
-		sscanf(request,"check/%d/;",&code_ret);
+		sscanf(request,"check/%d/;",&code_ret);//extraction des parametres
 
     }
 	else
@@ -428,6 +433,7 @@ void check(){
 
 
 	printf("vous avez %d nouveaux message\n",code_ret);
+	free(request);//liberation de la memoire allouée
 }
 /*affiche le menu principale
 */
@@ -439,7 +445,7 @@ void afficher_menu1(){
 	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
 	printf("c:consulter vos messages\n");
 	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
-	printf("en attente de votre choix: ");
+	printf("en attente de votre choix: \n");
 }
 /*affiche le menu secondaire
 */
@@ -453,7 +459,60 @@ void afficher_menu2(){
 	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
 	printf("g:liste de tout les messages \n");
 	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
-	printf("h:retourner au menu d'avant \n");
+	printf("h:suppression d'un message \n");
 	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
-	printf("en attente de votre choix: ");
+	printf("i:retourner au menu principal\n");
+	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
+	printf("en attente de votre choix: \n");
+}
+/*sous programme qui se chargera de l'affichage
+ * des en-tetes des  messages(nouveaux/tout)
+*/
+void list(char *param){
+	char*request = (char*)malloc(TAILLE_REQUETTE);
+	teste_malloc(request);
+	int nbre = 0 ;
+	int i;
+	char expediteur[TAILLE_ID];
+	char objet[TAILLE_PASSWORD];
+
+	sprintf(request,"list/%s/;",param);//formulation de la requette
+	Emission(request);
+
+	request = Reception();
+
+	if (request != NULL ){
+		sscanf(request,"info/%d/;",&nbre);
+	}
+	else
+		exit(INTERN_ERROR);
+		//traitement du cas ou une erreur s'est produite
+	if(nbre == SERV_ERROR){
+		printf("une erreur s'est produite");
+		exit(SERV_ERROR);
+	}
+
+
+	if (nbre == 0)
+		printf("vous n'avez aucun nouveaux message ");
+	else{
+		for(i = 0 ; i < nbre ; i++){// reception,extraction puis affichage des parametres
+			request=Reception();
+			sscanf(request,"info/%s/%s/;",expediteur,objet);
+			printf("<%d> expediteur : %s \n objet : %s\n ***************************************\n",i,expediteur,objet);
+		}
+	}
+	free(request);
+
+}
+/*ce sous programme prendra en parametre
+ *un numero de message a lire puis l'affichera
+*/
+void lire(char nbre){
+	char*request = (char*)malloc(TAILLE_REQUETTE);
+	teste_malloc(request);
+
+	sprintf(request,"read/%c/;",nbre);
+
+
 }

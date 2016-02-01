@@ -91,4 +91,14 @@ void afficher_menu1();
 /*affiche le menu secondaire
 */
 void afficher_menu2();
+/*sous programme qui se chargera de l'affichage
+ * des en-tetes des  messages(nouveaux/tout)
+ * elle prendra en parametre new ou all
+*/
+void list(char *param);
+/*ce sous programme prendra en parametre
+ *un numero de message a lire puis l'affichera
+*/
+void lire(char nbre);
+
 #endif
