@@ -52,10 +52,18 @@ int EmissionBinaire(char *donnees, size_t taille);
 /* Ferme la connexion.
  */
 void Terminaison();
-/*le sous programme teste les malloc teste de malloc
- * il renvoie 0 si l'allocation s'est mal passé
+
+/*le sous programme teste les malloc
+ *affiche un message de'erreur et exit en cas
+ *de probléme
+ */
+
+void teste_malloc(char *ptr);
+
+/*le sous programme s'occupe de vider le buffer
 */
-int teste_malloc(char *ptr);
+void viderBuffer();
+
 /* recupére le login et le mot de passe pour
  *authentifier le client
  *ca renvoie NO_PB si tout s'est bien passé
@@ -70,4 +78,17 @@ int authentification(char *login);
 */
 void Envoyermessage(char login[]);
 
+/*sous programme de deconnexion
+*/
+void deconnexion();
+/*le sous programme se chargera d'informer
+*/
+void check();
+
+/*affiche le menu principale
+*/
+void afficher_menu1();
+/*affiche le menu secondaire
+*/
+void afficher_menu2();
 #endif
