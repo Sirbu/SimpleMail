@@ -320,7 +320,7 @@ int authentification(char *login){
 */
 void Envoyermessage(char login[]){
 
-	int continuer=0;
+	char continuer='o';
 	char dest[TAILLE_ID];
 	char objet[TAILLE_PASSWORD];
 	char contenu[TAILLE_CONETENU];
@@ -359,19 +359,19 @@ void Envoyermessage(char login[]){
 	else
 		exit(INTERN_ERROR);
 
-	if (code_ret==SERV_ERROR){
+	if (code_ret!=NO_PB && code_ret != DEST_ERROR){
 		printf("erreur de serveur!!! reessayer ulterieurement");
 		exit(SERV_ERROR);
 	}
 
+	if (code_ret == DEST_ERROR ){
 
-		if(code_ret== DEST_ERROR){
+			printf("vous vous etes tropmé de destinataire voulez vous reessayer? o/oui n/non ");
+			continuer=fgetc(stdin);
+			while(continuer=='o' && code_ret == DEST_ERROR ){
 
-			do{
-				printf("vous vous etes tropmé de destinataire voulez vous reessayer? o/oui n/non ");
-				continuer=fgetc(stdin);
+				printf(" veuillez ressaisir la bonne adresse : ");
 
-				printf(" veuillez ressaisir la bonne adresse :\n");
 				fgets(dest,TAILLE_ID,stdin);
 				dest[strlen(dest)-1]='\0';
 
@@ -388,12 +388,24 @@ void Envoyermessage(char login[]){
 					sscanf(request,"return/%d/;",&code_ret);
 				else
 					exit(INTERN_ERROR);
+				if(code_ret== DEST_ERROR){
+					printf("vous vous etes tropmé de destinataire voulez vous reessayer? o/oui n/non ");
+					continuer=fgetc(stdin);
+				}
+				else{
+					printf("une erreur s'est produite!! \n");
+					exit(code_ret);
+				}
+			}
 
-			}while(continuer=='y' && code_ret!=DEST_ERROR);
-			printf("message envoyé avec succès\n");
-		}
-		free(request);//liberation de la memoire allouée
+
+
+	}// une fois ici c'est que tout s'est bien passé
+	printf("message envoyé avec succès\n");
+	free(request);//liberation de la memoire allouée
+
 }
+
 /*deconnexion
 */
 void deconnexion(){
