@@ -398,10 +398,13 @@ void Envoyermessage(char login[]){
 				}
 			}
 
+		if (code_ret== NO_PB)
+			printf("message envoyé avec succès\n");
 
 
-	}// une fois ici c'est que tout s'est bien passé
-	printf("message envoyé avec succès\n");
+
+
+	}// une fois ici c'est que tout s'est bien passé(reussi a envoyer ou abandonne )
 	free(request);//liberation de la memoire allouée
 
 }
