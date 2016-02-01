@@ -755,7 +755,6 @@ int checkDest(char* destinataire)
 int checkNewMessages(char* login)
 {
 	int nbr_mess = 0;
-	char lu = -1;			// 0 si le message courant est nouveau, 1 sinon
 
 	char reponse[TAILLE_REQ];
 
@@ -767,9 +766,7 @@ int checkNewMessages(char* login)
 	// représente l'élément courant dans le dossier
 	struct dirent* fichier_courant = NULL;
 
-	// déscripteur du fichier à ouvrir pour
-	// vérifier si il a été lu ou pas
-	FILE* fic = NULL;
+	Message* mail_courant = createMessage();
 
 	DIR* boite_mail = opendir(login);
 	if (boite_mail == NULL)
@@ -792,29 +789,12 @@ int checkNewMessages(char* login)
 
 			sprintf(filename, "%s/%s", login, fichier_courant->d_name);
 
-			fic = fopen(filename, "r");
-			if(fic == NULL)
+			lireMessage(mail_courant, fichier_courant->d_name);
+
+			if(mail_courant->lu == '0')
 			{
-				fprintf(stderr, "[-] Erreur : fichier %s inaccessible\n",
-					filename);
-				// envoi_reponse(SERV_ERROR);
+				printf("[+] Messages non lus : %d\r", ++nbr_mess);
 			}
-			else
-			{
-				if(fread(&lu, 1, 1, fic) != 1)
-				{
-					fprintf(stderr,	"[-] Erreur : Lecture de %s impossible\n",
-						filename);
-				}
-
-				fclose(fic);
-
-				if(lu == '0')
-				{
-					printf("[+] Messages non lus : %d\r", ++nbr_mess);
-				}
-			}
-
 		}
 	}
 
@@ -834,7 +814,8 @@ int checkNewMessages(char* login)
 // réponse li doit attendre
 /******************************************
  * Pourrait être opti enne faisant qu'une *
- * seule boucle... À réfléchir...		  *
+ * seule boucle... À l'aide d'un tableau  *
+ * de messages...						  *
  ******************************************/
 int listMessages(char* requete, char* login)
 {
@@ -848,26 +829,27 @@ int listMessages(char* requete, char* login)
 	// pointeur permettant de se balader sur la requete
 	char* p_requete = NULL;
 
-	// Octet qui sera lu pour savoir si le message
-	// a été déjà lu. Il se trouve au début du fichier
-	// 0 si il n'est pas encore lu, 1 sinon.
-	char lu = -1;
-
 	// représente le dossier
 	DIR* boite_mail = NULL;
 
 	// représente l'élément courant du dossier
 	struct dirent* fichier_mess = NULL;
-	// le descripteur du fichier, permettant sa lecture
-	FILE* message = NULL;
 
-	// Contient le détail du message
-	Message* mail = createMessage();
+	// Tableau de messages !
+	// Contient le détail des messages à lister
+	Message* mails = malloc(sizeof(Message) * 10); // 10 est abritraire
+	if(mails == NULL)
+	{
+		fprintf(stderr, "[-] Erreur malloc !\n[-] Exiting !\n");
+		exit(EXIT_FAILURE);
+	}
 
-	int i = 0;		// compteur de boucle
-	int nbr_new_messages = 0;		// nombre de messages non lus
+	int i = 0;		        		 // compteur de boucle
+	int nbr_new_messages = 0;		// nombre de nouveaux messages
 	int nbr_messages = 0;		   // nombre de messages au total
 
+	// on se place juste avant le
+	// paramètre de la requête
 	p_requete = strstr(requete, "/");
 	if(p_requete == NULL)
 	{
@@ -875,7 +857,7 @@ int listMessages(char* requete, char* login)
 		envoi_reponse(SERV_ERROR);
 		return SERV_ERROR;
 	}
-
+	// on enregistre le paramètre
 	p_requete++;
 	while(p_requete[i] != '/' && i < 5)
 	{
@@ -889,43 +871,46 @@ int listMessages(char* requete, char* login)
 	boite_mail = opendir(login);
 	if(boite_mail == NULL)
 	{
-		fprintf(stderr, "[-] Warning : Boite mail introuvable\n[-] Aucun message\n");
+		printf("[-] Warning : Boite mail introuvable\n[-] Aucun message\n");
 		strncpy(reponse, "info/0/;", TAILLE_REQ);
 		Emission(reponse);
 		return 0;
 	}
 
 	// boucle de parcours des messages
+	i = 0;
 	while((fichier_mess = readdir(boite_mail)) != NULL)
 	{	// on ne traite pas le dossier courant et le dossier parent
-		// peut être faudra t'il tester si ce sotn bien des fichiers...
+		// peut être faudra t'il tester si ce sont bien des fichiers...
 		if((strncmp(fichier_mess->d_name, ".", 1) != 0)
 			&& (strncmp(fichier_mess->d_name, "..", 2) != 0))
 		{
-			message = fopen(fichier_mess->d_name, "r");
-			if (message == NULL) {
-				fprintf(stderr, "[-] Erreur : Fichier %s inaccessible\n", fichier_mess->d_name);
-				envoi_reponse(SERV_ERROR);
-				return SERV_ERROR;
-			}
-
-			if(fread(&lu, 1, 1, message) != 1)
-			{
-				fprintf(stderr, "[-] Erreur : lecture impossible !\n");
-				envoi_reponse(SERV_ERROR);
-				return SERV_ERROR;
-			}
+			lireMessage(mails+i, fichier_mess->d_name);
 
 			// si on veut compter le nombre de messages non lus
 			// et
 			// que le message que l'on vient de lire n'a pas été lu
-			if((strncmp(param, "new", 3) == 0) && (lu = 0))
+			if((strncmp(param, "new", 3) == 0) && (mails[i].lu = 0))
 			{
 				nbr_new_messages++;
 			}
 
 			nbr_messages++;
 		}
+
+		// si on incrémente i et qu'il est
+		// égal à la taille du tableau, on
+		// doit agrandir ce dernier.
+		if(i+1 == sizeof(mails))
+		{
+			mails = realloc(mails, sizeof(mails)+10);
+			if(mails == NULL)
+			{
+				fprintf(stderr, "[-] Erreur realloc !\n[-] Exiting !\n");
+				exit(EXIT_FAILURE);
+			}
+		}
+		i++;
 	}
 
 	if(strncmp(param, "new", 3) == 0)
@@ -942,12 +927,27 @@ int listMessages(char* requete, char* login)
 	// à venir
 	Emission(reponse);
 
-	// remet la position courante sur le premier élement
-	rewinddir(boite_mail);
+	// envoi du détail des fichiers
+	for(i = 0; i < sizeof(mails)/sizeof(Message); i++)
+	{
+		bzero(reponse, TAILLE_REQ); // probablement superflu
+		if(strncmp(param, "new", 3) == 0)
+		{
+			if(mails[i].lu == 0)
+			{
+				sprintf(reponse, "info/%s/%s/%s/;",
+					mails[i].src, mails[i].obj, mails[i].mess);
+			}
+		}
+		else
+		{
+			sprintf(reponse, "info/%s/%s/%s/;",
+				mails[i].src, mails[i].obj, mails[i].mess);
 
+		}
 
-	// lireMessage(mail, )
-
+		Emission(reponse);
+	}
 
 	closedir(boite_mail);
 
@@ -986,8 +986,8 @@ int lireMessage(Message* mail, char* fichier)
 	if(fic == NULL)
 	{
 		printf("[-] Erreur : fichier mail %s introuvable !\n", fichier);
-		envoi_reponse(DEST_ERROR);
-		return(DEST_ERROR);
+		envoi_reponse(SERV_ERROR);
+		return(SERV_ERROR);
 	}
 
 	while(!feof(fic))
