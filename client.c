@@ -333,7 +333,7 @@ void Envoyermessage(char login[]){
 
 	int code_ret;
 
-	viderBuffer();
+
 	printf("veuillez saisir l'@ destinatrice: ");
 	fgets(dest,TAILLE_ID,stdin);
 	dest[strlen(dest)-1]='\0';
@@ -361,12 +361,15 @@ void Envoyermessage(char login[]){
 	else
 		exit(INTERN_ERROR);
 
-	if (code_ret!=NO_PB && code_ret != DEST_ERROR){
-		printf("erreur de serveur!!! reessayer ulterieurement");
+	if (code_ret == SERV_ERROR){
+		printf("erreur de serveur!!! reessayer ulterieurement\n");
 		exit(SERV_ERROR);
 	}
+	else if (code_ret == NO_PB)
+		printf("message envoyé avec succés !!\n");
 
-	if (code_ret == DEST_ERROR ){
+
+	else{
 
 			printf("vous vous etes tropmé de destinataire voulez vous reessayer? o/oui n/non ");
 			continuer=fgetc(stdin);
@@ -377,7 +380,7 @@ void Envoyermessage(char login[]){
 
 				fgets(dest,TAILLE_ID,stdin);
 				dest[strlen(dest)-1]='\0';
-				viderBuffer();
+				//viderBuffer();
 				bzero(request,TAILLE_REQUETTE);//on vide la chaine de charactere
 
 				/*formulation de la requette*/
@@ -391,12 +394,12 @@ void Envoyermessage(char login[]){
 					sscanf(response,"return/%d/;",&code_ret);
 				else
 					exit(INTERN_ERROR);
-				if(code_ret== DEST_ERROR){
+				if(code_ret== DEST_ERROR ){
 					printf("vous vous etes tropmé de destinataire voulez vous reessayer? o/oui n/non ");
 					continuer=fgetc(stdin);
 					viderBuffer();
 				}
-				else{
+				else if(code_ret != NO_PB){
 					printf("une erreur s'est produite!! %d \n",code_ret);
 					exit(code_ret);
 				}
@@ -404,6 +407,10 @@ void Envoyermessage(char login[]){
 
 		if (code_ret== NO_PB)
 			printf("message envoyé avec succès\n");
+		else if (code_ret == SERV_ERROR){// dans ce cas de figure l
+			printf ("une erreur s'est produite merci de reinitialiser votre connexion\n ");
+			exit(SERV_ERROR);
+		}
 
 
 
@@ -523,7 +530,7 @@ void list(char *param){
 		}
 	}
 	free(request);
-
+	free (response);
 }
 /*ce sous programme prendra en parametre
  *un numero de message a lire puis l'affichera

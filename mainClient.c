@@ -43,7 +43,7 @@ int main(){
     /*une fois ici on est authentifier et on procede a l'affichage du menu*/
 
     afficher_menu1();
-    viderBuffer();
+    //viderBuffer();
     choix=fgetc(stdin);
     viderBuffer();
     while ( choix !='a' ){// tant que le client ne veut pas quitter
