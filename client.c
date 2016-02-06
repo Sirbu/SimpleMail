@@ -274,7 +274,7 @@ void teste_malloc(char *ptr){
 */
 int authentification(char *login){
 	int code_ret;
-	char* request=(char*)malloc(TAILLE_REQUETTE);
+	char request[TAILLE_REQUETTE];
 
 	teste_malloc(request);
 
@@ -305,16 +305,18 @@ int authentification(char *login){
 	Emission(request);
 
 	/*attente de la reponse*/
-	request=Reception();
+	char *response=Reception();
 
-	if (request!=NULL){
-		sscanf(request,"return/%d/;",&code_ret);
+	if (response!=NULL){
+		sscanf(response,"return/%d/;",&code_ret);
 		return (code_ret);
     }
 	else
 		return(INTERN_ERROR);
 	free(request);//liberation de la memoire allouée
+	free(response);
 }
+
 /*ce sous programme prend en paramettre @ de l'expediteur
  recuperera les champs necessaire pour l'envoie d'un message
 */
@@ -352,10 +354,10 @@ void Envoyermessage(char login[]){
 
 	/*reception de la requette*/
 
-	request=Reception();
+	char* response=Reception();
 
-	if (request!=NULL)
-		sscanf(request,"return/%d/;",&code_ret);
+	if (response != NULL)
+		sscanf(response,"return/%d/;",&code_ret);
 	else
 		exit(INTERN_ERROR);
 
@@ -368,13 +370,14 @@ void Envoyermessage(char login[]){
 
 			printf("vous vous etes tropmé de destinataire voulez vous reessayer? o/oui n/non ");
 			continuer=fgetc(stdin);
+			viderBuffer();
 			while(continuer=='o' && code_ret == DEST_ERROR ){
 
 				printf(" veuillez ressaisir la bonne adresse : ");
 
 				fgets(dest,TAILLE_ID,stdin);
 				dest[strlen(dest)-1]='\0';
-
+				viderBuffer();
 				bzero(request,TAILLE_REQUETTE);//on vide la chaine de charactere
 
 				/*formulation de la requette*/
@@ -382,18 +385,19 @@ void Envoyermessage(char login[]){
 
 				Emission(request);
 
-				request=Reception();
+				response=Reception();
 
-				if (request!=NULL)
-					sscanf(request,"return/%d/;",&code_ret);
+				if (response!=NULL)
+					sscanf(response,"return/%d/;",&code_ret);
 				else
 					exit(INTERN_ERROR);
 				if(code_ret== DEST_ERROR){
 					printf("vous vous etes tropmé de destinataire voulez vous reessayer? o/oui n/non ");
 					continuer=fgetc(stdin);
+					viderBuffer();
 				}
 				else{
-					printf("une erreur s'est produite!! \n");
+					printf("une erreur s'est produite!! %d \n",code_ret);
 					exit(code_ret);
 				}
 			}
@@ -406,7 +410,7 @@ void Envoyermessage(char login[]){
 
 	}// une fois ici c'est que tout s'est bien passé(reussi a envoyer ou abandonne )
 	free(request);//liberation de la memoire allouée
-
+	free (response);
 }
 
 /*deconnexion
@@ -415,7 +419,7 @@ void deconnexion(){
 
 	char *request=(char*)malloc(TAILLE_REQUETTE);
 	teste_malloc(request);
-	strcat(request,"disc/;");
+	strcpy(request,"disc/;");
 	Emission(request);
 	printf("***************************\n vous ete maintenant deconnécté ,à bientot\n***************************\n");
 
@@ -432,15 +436,15 @@ void check(){
 	char*request=(char*)malloc(TAILLE_REQUETTE);
 	teste_malloc(request);
 	int code_ret;
-	strcat(request,"check/;");
+	strcpy(request,"check/;");
 
 	Emission(request);//envoie de la requette
 
-	request = Reception();
+	char *response = Reception();
 
-	if (request!=NULL){
+	if (response!=NULL){
 
-		sscanf(request,"check/%d/;",&code_ret);//extraction des parametres
+		sscanf(response,"check/%d/;",&code_ret);//extraction des parametres
 
     }
 	else
@@ -449,6 +453,7 @@ void check(){
 
 	printf("vous avez %d nouveaux message\n",code_ret);
 	free(request);//liberation de la memoire allouée
+	free(response);
 }
 /*affiche le menu principale
 */
@@ -494,10 +499,10 @@ void list(char *param){
 	sprintf(request,"list/%s/;",param);//formulation de la requette
 	Emission(request);
 
-	request = Reception();
+	char* response = Reception();
 
-	if (request != NULL ){
-		sscanf(request,"info/%d/;",&nbre);
+	if (response != NULL ){
+		sscanf(response,"info/%d/;",&nbre);
 	}
 	else
 		exit(INTERN_ERROR);
@@ -512,8 +517,8 @@ void list(char *param){
 		printf("vous n'avez aucun nouveaux message ");
 	else{
 		for(i = 0 ; i < nbre ; i++){// reception,extraction puis affichage des parametres
-			request=Reception();
-			sscanf(request,"info/%s/%s/;",expediteur,objet);
+			response=Reception();
+			sscanf(response,"info/%s/%s/;",expediteur,objet);
 			printf("<%d> expediteur : %s \n objet : %s\n ***************************************\n",i,expediteur,objet);
 		}
 	}

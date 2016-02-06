@@ -43,8 +43,9 @@ int main(){
     /*une fois ici on est authentifier et on procede a l'affichage du menu*/
 
     afficher_menu1();
+    viderBuffer();
     choix=fgetc(stdin);
-
+    viderBuffer();
     while ( choix !='a' ){// tant que le client ne veut pas quitter
         //system("clear");
         if ( choix == 'b' ){
@@ -52,22 +53,23 @@ int main(){
             Envoyermessage(login);
             afficher_menu1();
             choix=fgetc(stdin);
+
         }
 
         else if( choix == 'c' ){
             //system("clear");
             afficher_menu2();
 
-            viderBuffer();
+            //viderBuffer();
             choix=fgetc(stdin);
+
             //system("clear");
         }
         else if ( choix == 'd' ){
                 check();
                 afficher_menu2();
-
-                viderBuffer();
                 choix=fgetc(stdin);
+
         }
         else if (choix == 'e'){
             list("new");
@@ -96,7 +98,7 @@ int main(){
 
         }
 
-        //viderBuffer();
+        viderBuffer();
     }
 
     /*une fois, ici le client veut se deconnecté
