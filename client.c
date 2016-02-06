@@ -499,10 +499,12 @@ void list(char *param){
 	char*request = (char*)malloc(TAILLE_REQUETTE);
 	teste_malloc(request);
 	int nbre = 0 ;
-	int i;
+	int i = 0;
+	int j= 0;
+	int pos=0;
 	char expediteur[TAILLE_ID];
 	char objet[TAILLE_PASSWORD];
-
+	char * paid;
 	sprintf(request,"list/%s/;",param);//formulation de la requette
 	Emission(request);
 
@@ -522,24 +524,90 @@ void list(char *param){
 
 	if (nbre == 0)
 		printf("vous n'avez aucun nouveaux message ");
+
 	else{
-		for(i = 0 ; i < nbre ; i++){// reception,extraction puis affichage des parametres
+		for(j = 1 ; j <= nbre ; j++){// reception,extraction puis affichage des parametres
+			i = 5;
 			response=Reception();
-			sscanf(response,"info/%s/%s/;",expediteur,objet);
-			printf("<%d> expediteur : %s \n objet : %s\n ***************************************\n",i,expediteur,objet);
+			//extraction
+
+			while(response[i] != '/'){
+				expediteur[pos] = response[i];
+				i++;
+				pos++;
+			}
+			expediteur[pos] = '\0';
+			i++;
+			pos=0;
+			while(response[i] != '/'){
+				objet[pos] =response[i];
+				i++;
+			}
+			objet[pos] = '\0';
+
+			printf("<%d> expediteur : %s \n objet : %s\n ***************************************\n",j,expediteur,objet);
 		}
 	}
 	free(request);
 	free (response);
 }
-/*ce sous programme prendra en parametre
- *un numero de message a lire puis l'affichera
+/*ce sous programme se chargera de demander a l'utilisateur
+*le message qu'il voudra lire puis le luis affichera
 */
-void lire(char nbre){
-	char*request = (char*)malloc(TAILLE_REQUETTE);
+void lire(){
+	char request[TAILLE_REQUETTE];
 	teste_malloc(request);
+	char expediteur[TAILLE_ID];
+	char objet[TAILLE_PASSWORD];
+	char contenu[TAILLE_CONETENU];
+	int i=5;
+	int pos=0;
+	char nbre;
+	printf("rentrez le numero du message a lire :  ");
+	nbre=getchar();
+	viderBuffer();
 
 	sprintf(request,"read/%c/;",nbre);
 
+	Emission(request);
 
+	char* response = Reception();
+	if (response == NULL){
+		printf("une erreur s'est produite /n");
+		exit(INTERN_ERROR);
+	}
+	char* response=Reception();
+	if (char == NULL){
+		printf("une erreur s'est produite veuillez reessayer ulterieurement\n");
+		exit(INTERN_ERROR);
+	}
+
+	while(response[i]!='/'){
+		expediteur[pos]=response[i];
+		i++;
+		pos++;
+	}
+	expediteur[pos]='\0';
+	pos=0;
+	i++;
+	while (response[i]!='/'){
+		objet[pos]=response[i];
+		i++;
+		pos++;
+	}
+	objet[pos]='\0';
+	pos=0;
+	i++;
+	while(response[i]!='\0' && response[i+1]!=';'){//etant donnée que la requette se termine par /;
+		contenu[pos]=response[i];
+		i++;
+		pos++;
+	}
+	contenu[pos]='\0';
+	printf("****************************************************************************\n
+			expediteur: %s\n
+			objet: %s\n
+			contenu: %s\n**************************************************************************\n",expediteur,objet,contenu);
+
+	free(response);
 }

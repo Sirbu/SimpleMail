@@ -78,6 +78,7 @@ int main(){
 
         }
         else if(choix == 'f'){
+            lire();
             afficher_menu2();
             choix=fgetc(stdin);
 
@@ -86,6 +87,10 @@ int main(){
             list("all");
             afficher_menu2();
             choix=fgetc(stdin);
+        }
+        else if (choix== 'h'){
+            afficher_menu2();
+            choix=getchar();
         }
         else if( choix == 'i' ){
                 afficher_menu1();
@@ -99,6 +104,7 @@ int main(){
         }
 
         viderBuffer();
+        system("clear");
     }
 
     /*une fois, ici le client veut se deconnecté

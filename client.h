@@ -96,9 +96,9 @@ void afficher_menu2();
  * elle prendra en parametre new ou all
 */
 void list(char *param);
-/*ce sous programme prendra en parametre
- *un numero de message a lire puis l'affichera
+/*ce sous programme se chargera de demander a l'utilisateur
+*le message qu'il voudra lire puis le luis affichera
 */
-void lire(char nbre);
+void lire();
 
 #endif
