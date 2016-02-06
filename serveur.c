@@ -511,7 +511,8 @@ int authentification(char* requete, char* login, char* password)
  * les paramètres par exemple. Poour l'instant je choisi la simplicitié
  ************************************/
 // Parse une requête d'envoi de message.
-// Extrait source, destinataire, objet, contenu, message
+// Extrait la source, le destinataire, l'objet
+// et le contenu message.
 // retourne un message d'erreur au client si cela se passe mal
 // renvoie 1 si il y a une erreur, 0 sinon
 // NB: vérifier le nombre de paramètres un peu mieux que ça.
@@ -627,8 +628,6 @@ int sendMessage(char* requete)
 	// identifcateur du fichier message
 	FILE* fichier_mess = NULL;
 
-	int ret = 0; 		// retour de fonction fwrite
-
 	// chaine contenant le nom du fichier message
 	char filename[TAILLE_FILENAME];
 
@@ -640,7 +639,7 @@ int sendMessage(char* requete)
 
 	Message* mail = createMessage();
 
-	mail->lu = 0;	// ce message n'est pas encore lu
+	mail->lu = '0';	// ce message n'est pas encore lu
 
 	parseMessage(requete, mail);
 
@@ -683,9 +682,9 @@ int sendMessage(char* requete)
 	filename[strlen(filename)] = '/';
 	strcat(filename, mail->src);
 	// écriture de la date dans le nom du fichier
-	sprintf(filename+strlen(filename), "_%d-%d-%d_%d-%d-%d", c_time_struct->tm_mday,
-		c_time_struct->tm_mon, c_time_struct->tm_year, c_time_struct->tm_hour,
-		c_time_struct->tm_min, c_time_struct->tm_sec);
+	sprintf(filename+strlen(filename), "_%d-%d-%d_%d-%d-%d",
+		c_time_struct->tm_mday,	c_time_struct->tm_mon, c_time_struct->tm_year,
+		c_time_struct->tm_hour,	c_time_struct->tm_min, c_time_struct->tm_sec);
 
 	// printf("[D] filename = %s\n", filename);
 
@@ -697,6 +696,7 @@ int sendMessage(char* requete)
 		return SERV_ERROR;
 	}
 
+	// ce bout de code ne fonctionne pas...
 	// if((ret = fwrite(mail, sizeof(Message), 1, fichier_mess)) != 1)
 	// {
 	// 	fprintf(stderr, "[-] Erreur : problème lors de l'écriture !\n");
@@ -704,10 +704,8 @@ int sendMessage(char* requete)
 	// 	envoi_reponse(SERV_ERROR);
 	// 	return SERV_ERROR;
 	// }
-
-	ret = fprintf(fichier_mess, "%d\n%s\n%s\n%s\n%s\n", mail->lu, mail->src, mail->dest, mail->obj, mail->mess);
-
-	printf("[D] Retour fprintf = %d\n", ret);
+	fprintf(fichier_mess, "%c\n%s\n%s\n%s\n%s\n",
+		(char)mail->lu, mail->src, mail->dest, mail->obj, mail->mess);
 
 	envoi_reponse(NO_PB);
 
@@ -782,16 +780,17 @@ int checkNewMessages(char* login)
 
 	while((fichier_courant = readdir(boite_mail)) != NULL)
 	{
+		sprintf(filename, "%s/%s", login, fichier_courant->d_name);
+		// printf("[D] CHECK filename = %s\n", filename);
+
 		// si on est pas sur le dossier courant ou parent...
-		if(strncmp(fichier_courant->d_name, ".", 1) != 0
-			&& strncmp(fichier_courant->d_name, "..", 1) != 0)
+		if(strchr(filename, '.') == NULL)
 		{
+			lireMessage(mail_courant, filename);
 
-			sprintf(filename, "%s/%s", login, fichier_courant->d_name);
+			// printf("[D] LU : %c\n", mail_courant->lu);
 
-			lireMessage(mail_courant, fichier_courant->d_name);
-
-			if(mail_courant->lu == '0')
+			if((char)mail_courant->lu == '0')
 			{
 				printf("[+] Messages non lus : %d\r", ++nbr_mess);
 			}
@@ -832,8 +831,18 @@ int listMessages(char* requete, char* login)
 	// représente le dossier
 	DIR* boite_mail = NULL;
 
+	// conient le nom complet du fichier mail
+	// boite_mail/fichier_mess
+	char filename[100];
+
 	// représente l'élément courant du dossier
 	struct dirent* fichier_mess = NULL;
+
+	int i = 0;		        		  // compteur de boucle
+	int j = 0;					     // autre compteur de boucle
+	int nbr_new_messages = 0;		// nombre de nouveaux messages
+	int nbr_messages = 0;		   // nombre de messages au total
+	int nbr_requetes = 0;		  // nombre de requêtes qu'il faudra envoyer
 
 	// Tableau de messages !
 	// Contient le détail des messages à lister
@@ -843,10 +852,6 @@ int listMessages(char* requete, char* login)
 		fprintf(stderr, "[-] Erreur malloc !\n[-] Exiting !\n");
 		exit(EXIT_FAILURE);
 	}
-
-	int i = 0;		        		 // compteur de boucle
-	int nbr_new_messages = 0;		// nombre de nouveaux messages
-	int nbr_messages = 0;		   // nombre de messages au total
 
 	// on se place juste avant le
 	// paramètre de la requête
@@ -880,18 +885,24 @@ int listMessages(char* requete, char* login)
 	// boucle de parcours des messages
 	i = 0;
 	while((fichier_mess = readdir(boite_mail)) != NULL)
-	{	// on ne traite pas le dossier courant et le dossier parent
+	{
+		// arf, pas de vérif sur la taille ?!
+		// Buffer overflow en vue !
+		sprintf(filename, "%s/%s", login, fichier_mess->d_name);
+
+		// on ne traite pas le dossier courant et le dossier parent
 		// peut être faudra t'il tester si ce sont bien des fichiers...
-		if((strncmp(fichier_mess->d_name, ".", 1) != 0)
-			&& (strncmp(fichier_mess->d_name, "..", 2) != 0))
+		if(strchr(filename, '.') == NULL)
 		{
-			lireMessage(mails+i, fichier_mess->d_name);
+			printf("[D] LIST filename = %s\n", filename);
+			lireMessage(mails+i, filename);
 
 			// si on veut compter le nombre de messages non lus
 			// et
 			// que le message que l'on vient de lire n'a pas été lu
-			if((strncmp(param, "new", 3) == 0) && (mails[i].lu = 0))
+			if((strncmp(param, "new", 3) == 0) && ((char)mails[i].lu == '0'))
 			{
+				printf("[D] new mess detected\n");
 				nbr_new_messages++;
 			}
 
@@ -913,6 +924,8 @@ int listMessages(char* requete, char* login)
 		i++;
 	}
 
+	printf("[+] Préparation des informations des %d messages\n", nbr_messages);
+
 	if(strncmp(param, "new", 3) == 0)
 	{
 		sprintf(reponse, "info/%d/;", nbr_new_messages);
@@ -925,28 +938,56 @@ int listMessages(char* requete, char* login)
 	// Émission de la première trame d'informations
 	// On prévient le client du nombre de requêtes
 	// à venir
+	printf("[D] 1ere REPONSE : %s\n", reponse);
 	Emission(reponse);
 
-	// envoi du détail des fichiers
-	for(i = 0; i < sizeof(mails)/sizeof(Message); i++)
+	// on doit déterminer le nombre de requête
+	// à envoyer.
+	if(strncmp(param, "new", 3))
+	{
+		nbr_requetes = nbr_messages;
+	}
+	else
+	{
+		nbr_requetes = nbr_new_messages;
+	}
+
+	// ouch, c'est risqué !
+	for(i = 0; j < nbr_requetes; i++)
 	{
 		bzero(reponse, TAILLE_REQ); // probablement superflu
 		if(strncmp(param, "new", 3) == 0)
 		{
-			if(mails[i].lu == 0)
+			printf("[D] Traitement mess non lus\n");
+			if((char)mails[i].lu == '0')
 			{
-				sprintf(reponse, "info/%s/%s/%s/;",
-					mails[i].src, mails[i].obj, mails[i].mess);
+				printf("[D] Message non lu !\n");
+
+				afficherMessage(mails+i);
+
+				sprintf(reponse, "info/");
+				strncat(reponse, mails[i].src, TAILLE_LOGIN);
+				strncat(reponse, "/", 1);
+				strncat(reponse, mails[i].obj, TAILLE_OBJ);
+				strncat(reponse, "/;", 2);
+
+				printf("[D] INFOS reponse = %s\n", reponse);
+
+				Emission(reponse);
+				j++;
 			}
 		}
 		else
 		{
-			sprintf(reponse, "info/%s/%s/%s/;",
-				mails[i].src, mails[i].obj, mails[i].mess);
+			printf("[D] Traitement messages lus\n");
+			sprintf(reponse, "info/%s/%s/;",
+				mails[i].src, mails[i].obj);
 
+			printf("[D] INFOS reponse = %s\n", reponse);
+			Emission(reponse);
+			j++;
 		}
 
-		Emission(reponse);
 	}
 
 	closedir(boite_mail);
@@ -954,6 +995,43 @@ int listMessages(char* requete, char* login)
 	return 0;
 
 }
+
+
+int readMessage(char* requete)
+{
+	// représente le numéro du message
+	int num_mess = 0;
+
+	// contient le paramètre (new|all)
+	char param[5] = {0};
+
+	// va permettre de se positionner
+	// sur la requete
+	char* p_requete = NULL;
+
+	// représente le dossier
+	DIR* boite_mail = NULL;
+
+	// conient le nom complet du fichier mail
+	// boite_mail/fichier_mess
+	char filename[100];
+
+	// représente l'élément courant du dossier
+	struct dirent* fichier_mess = NULL;
+
+	boite_mail = opendir(login);
+	if(boite_mail == NULL)
+	{
+		printf("[-] Warning : Boite mail introuvable\n[-] Aucun message\n");
+		strncpy(reponse, "info/0/;", TAILLE_REQ);
+		Emission(reponse);
+		return 0;
+	}
+
+
+	return 0;
+}
+
 
 /*********************
  * Fonctions ayant rapport avec Message
@@ -990,19 +1068,40 @@ int lireMessage(Message* mail, char* fichier)
 		return(SERV_ERROR);
 	}
 
-	while(!feof(fic))
+	if(fscanf(fic, "%c\n", &mail->lu) != 1)
 	{
-		// j'ai du mal à savoir si le choix
-		// taille/nbr_elmts est judicieux
-		// Je voudrais lire la totalité du fichier, dont je ne
-		// connais pas la taille, et le stocker dans la structure.
-		// Les données sont ordonnées comme il le faut.
-		if(fread(mail, 1, 1, fic))
-		{
-			perror("[-] Erreur lecture");
-			return SERV_ERROR;
-		}
+		fprintf(stderr, "[-] Erreur : impossible de lire le message !\n");
+		envoi_reponse(SERV_ERROR);
+		return SERV_ERROR;
 	}
+
+	fgets(mail->src, TAILLE_LOGIN, fic);
+	mail->src[strlen(mail->src)-1] = '\0';
+
+	fgets(mail->dest, TAILLE_LOGIN, fic);
+	mail->dest[strlen(mail->dest)-1] = '\0';
+
+	fgets(mail->obj, TAILLE_OBJ, fic);
+	mail->obj[strlen(mail->obj)-1] = '\0';
+
+	fgets(mail->mess, TAILLE_MESS, fic);
+	mail->mess[strlen(mail->mess)-1] = '\0';
+
+	// while(!feof(fic))
+	// {
+	// 	// j'ai du mal à savoir si le choix
+	// 	// taille/nbr_elmts est judicieux
+	// 	// Je voudrais lire la totalité du fichier, dont je ne
+	// 	// connais pas la taille, et le stocker dans la structure.
+	// 	// Les données sont ordonnées comme il le faut.
+	// 	// if(fread(mail, sizeof(Message), 1, fic))
+	// 	// {
+	// 	// 	perror("[-] Erreur lecture");
+	// 	// 	return SERV_ERROR;
+	// 	// }
+	//
+	//
+	// }
 
 	return 0;
 }
@@ -1029,7 +1128,7 @@ int ecrireMessage(Message* mail, char* fichier)
 void afficherMessage(Message* mail)
 {
 	printf("[+] Affichage des informations du message :\n");
-	printf(" -> Lu : %d\n", mail->lu);
+	printf(" -> Lu : %c\n", mail->lu);
 	printf(" -> Source : %s\n", mail->src);
 	printf(" -> Destinataire : %s\n", mail->dest);
 	printf(" -> Objet : %s\n", mail->obj);

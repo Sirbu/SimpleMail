@@ -88,6 +88,12 @@ int main(void)
 
                 listMessages(requete, login);
             }
+            else if(strncmp(type_requete, "read", strlen(type_requete)) == 0)
+            {
+                printf("[+] Demande de lecture de message\n");
+
+                readMessage(requete);
+            }
             else
             {
                 printf("[+] Erreur : trame non reconnue !\n");

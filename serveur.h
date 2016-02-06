@@ -32,7 +32,9 @@
 // structure décrivant un message
 typedef struct mess
 {
-    int lu;                         // 1 si lu, 0 sinon
+    // lu est un char car cela simplifie la lecture
+    // de sa valeur dans le fichier
+    char lu;                         // 1 si lu, 0 sinon
 
     char src[TAILLE_LOGIN];        // Expéditeur du message
     char dest[TAILLE_LOGIN];      // Destinataire du message
@@ -136,6 +138,10 @@ int checkNewMessages(char* login);
 // au client de savoir combien de requêtes de
 // réponse li doit attendre
 int listMessages(char* requete, char* login);
+
+// readMessage envoie le contenu du message
+// désigné par un numéro dans la requête.
+int readMessage(char* requete);
 
 /********************
  * Fonctions Message
