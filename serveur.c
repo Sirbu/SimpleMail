@@ -947,6 +947,8 @@ int listMessages(char* requete, char* login)
 			if((char)mails[i].lu == '0')
 			{
 				sprintf(reponse, "info/");
+				strncat(reponse, &mails[i].lu, 1);
+				strncat(reponse, "/", 1);
 				strncat(reponse, mails[i].src, TAILLE_LOGIN);
 				strncat(reponse, "/", 1);
 				strncat(reponse, mails[i].obj, TAILLE_OBJ);
@@ -965,6 +967,8 @@ int listMessages(char* requete, char* login)
 			if((char)mails[i].lu == '0' || (char)mails[i].lu == '1')
 			{
 				sprintf(reponse, "info/");
+				strncat(reponse, &mails[i].lu, 1);
+				strncat(reponse, "/", 1);
 				strncat(reponse, mails[i].src, TAILLE_LOGIN);
 				strncat(reponse, "/", 1);
 				strncat(reponse, mails[i].obj, TAILLE_OBJ);
@@ -985,7 +989,9 @@ int listMessages(char* requete, char* login)
 
 }
 
-
+// retourne 0 si tout va bien. Un code d'erreur
+// sinon. Envoie au client le message voulut,
+// ainsi que l'expéditeur et l'objet.
 int readMessage(char* requete, char* login)
 {
 	// représente le numéro du message
@@ -1102,7 +1108,7 @@ int deleteMessage(char* requete, char* login)
 	// représente le dossier
 	DIR* boite_mail = NULL;
 
-	// conient le nom complet du fichier mail
+	// contient le nom complet du fichier mail
 	// boite_mail/fichier_mess
 	char filename[100];
 
@@ -1173,7 +1179,7 @@ int lireMessage(Message* mail, char* fichier)
 	FILE* fic = fopen(fichier, "r");
 	if(fic == NULL)
 	{
-		printf("[-] Erreur : fichier %s introuvable !\n", fichier);
+		printf("[-] Erreur : fichier %s introuvable !", fichier);
 		envoi_reponse(SERV_ERROR);
 		return(SERV_ERROR);
 	}
@@ -1198,20 +1204,15 @@ int lireMessage(Message* mail, char* fichier)
 	fgets(mail->mess, TAILLE_MESS, fic);
 	mail->mess[strlen(mail->mess)-1] = '\0';
 
-	// while(!feof(fic))
+	// j'ai du mal à savoir si le choix
+	// taille/nbr_elmts est judicieux
+	// Je voudrais lire la totalité du fichier, dont je ne
+	// connais pas la taille, et le stocker dans la structure.
+	// Les données sont ordonnées comme il le faut.
+	// if(fread(mail, sizeof(Message), 1, fic) != 1)
 	// {
-	// 	// j'ai du mal à savoir si le choix
-	// 	// taille/nbr_elmts est judicieux
-	// 	// Je voudrais lire la totalité du fichier, dont je ne
-	// 	// connais pas la taille, et le stocker dans la structure.
-	// 	// Les données sont ordonnées comme il le faut.
-	// 	if(fread(mail, sizeof(Message), 1, fic))
-	// 	{
-	// 		perror("[-] Erreur lecture");
-	// 		return SERV_ERROR;
-	// 	}
-	//
-	//
+	// 	perror("[-] Erreur lecture");
+	// 	return SERV_ERROR;
 	// }
 
 	fclose(fic);
