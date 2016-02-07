@@ -11,6 +11,7 @@
 #define TAILLE_ID 20
 #define TAILLE_PASSWORD 200
 #define TAILLE_CONETENU 3500
+#define couleur(param) printf("\033[%sm",param)
 /* Initialisation.
  * Connexion au serveur sur la machine donnee.
  * Utilisez localhost pour un fonctionnement local.

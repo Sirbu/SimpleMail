@@ -504,7 +504,7 @@ void list(char *param){
 	int pos=0;
 	char expediteur[TAILLE_ID];
 	char objet[TAILLE_PASSWORD];
-	char * paid;
+	char etat;
 	sprintf(request,"list/%s/;",param);//formulation de la requette
 	Emission(request);
 
@@ -526,11 +526,18 @@ void list(char *param){
 		printf("vous n'avez aucun nouveaux message ");
 
 	else{
-		for(j = 1 ; j <= nbre ; j++){// reception,extraction puis affichage des parametres
-			i = 5;
-			response=Reception();
-			//extraction
 
+		for(j = 1 ; j <= nbre ; j++){// reception,extraction puis affichage des parametres
+			i = 7;
+			pos=0;
+			response=Reception();
+			printf("%s\n",response );
+			//extraction
+			if(response == NULL){
+				printf("une erreur s'est produite");
+				exit(SERV_ERROR);
+			}
+			etat=response[5];
 			while(response[i] != '/'){
 				expediteur[pos] = response[i];
 				i++;
@@ -542,10 +549,30 @@ void list(char *param){
 			while(response[i] != '/'){
 				objet[pos] =response[i];
 				i++;
+				pos++;
 			}
 			objet[pos] = '\0';
+			if(etat == '0'){
+				couleur("41");
+				printf("<%d> expediteur : %s",j,expediteur);
+				couleur("0");
+				printf("\n");
+				couleur("41");
+				printf("objet: %s",objet );
+				couleur("0");
+				printf("\n");
 
-			printf("<%d> expediteur : %s \n objet : %s\n ***************************************\n",j,expediteur,objet);
+				printf("***************************************");
+
+		    }
+			else{
+				printf("<%d> expediteur : %s \n objet : %s\n ***************************************\n",j,expediteur,objet);
+
+			}
+			// vider le tableau
+			bzero(expediteur,TAILLE_ID);
+			bzero(objet,TAILLE_PASSWORD);
+
 		}
 	}
 	free(request);
@@ -554,16 +581,21 @@ void list(char *param){
 /*ce sous programme se chargera de demander a l'utilisateur
 *le message qu'il voudra lire puis le luis affichera
 */
+/*
 void lire(){
 	char request[TAILLE_REQUETTE];
 	teste_malloc(request);
 	char expediteur[TAILLE_ID];
 	char objet[TAILLE_PASSWORD];
 	char contenu[TAILLE_CONETENU];
+	char param[4];
 	int i=5;
 	int pos=0;
 	char nbre;
+	printf("voulez vous lire un ancien message ou un nouveau new/nouveau ou all/ancien\n");
+	fgets(param,);
 	printf("rentrez le numero du message a lire :  ");
+
 	nbre=getchar();
 	viderBuffer();
 
@@ -611,3 +643,4 @@ void lire(){
 
 	free(response);
 }
+:*/
