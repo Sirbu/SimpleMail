@@ -522,15 +522,16 @@ void list(char *param){
 	}
 
 
-	if (nbre == 0)
+	if (nbre == 0){
+		free(response);
 		printf("vous n'avez aucun nouveaux message ");
-
+	}
 	else{
 
 		for(j = 1 ; j <= nbre ; j++){// reception,extraction puis affichage des parametres
 			i = 7;
 			pos=0;
-			response=Reception();
+			char *response=Reception();
 			printf("%s\n",response );
 			//extraction
 			if(response == NULL){
@@ -563,6 +564,7 @@ void list(char *param){
 				printf("\n");
 
 				printf("***************************************");
+				printf("\n");
 
 		    }
 			else{
@@ -572,7 +574,7 @@ void list(char *param){
 			// vider le tableau
 			bzero(expediteur,TAILLE_ID);
 			bzero(objet,TAILLE_PASSWORD);
-
+			free (response);
 		}
 	}
 	free(request);
