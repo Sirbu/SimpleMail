@@ -92,7 +92,13 @@ int main(void)
             {
                 printf("[+] Demande de lecture de message\n");
 
-                readMessage(requete);
+                readMessage(requete, login);
+            }
+            else if((strncmp(type_requete, "delete", strlen(type_requete)) == 0))
+            {
+                printf("[+] Demande de suppression de message\n");
+
+                deleteMessage(requete, login);
             }
             else
             {

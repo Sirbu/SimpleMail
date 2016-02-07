@@ -14,10 +14,12 @@
 #define TAILLE_REQ      4096        // Taille max d'une requête
 
 #define TAILLE_MESS     3500        // Taille max d'un message (le contenu)
-
 #define TAILLE_TYPE     512         // Taille max du type de la requête
-
 #define TAILLE_OBJ      50          // Taille max du l'objet du message
+
+// nombre maximal de messages dans
+// la boite mail
+#define NBR_MESS_MAX    100
 
 // doit être long car le mot de passe reçu est un hash SHA512
 #define TAILLE_PASS         500
@@ -141,7 +143,11 @@ int listMessages(char* requete, char* login);
 
 // readMessage envoie le contenu du message
 // désigné par un numéro dans la requête.
-int readMessage(char* requete);
+int readMessage(char* requete, char* login);
+
+// supprime le message désigné par un
+// numéro dans la requête.
+int deleteMessage(char* requete, char* login);
 
 /********************
  * Fonctions Message
