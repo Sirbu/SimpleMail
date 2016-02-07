@@ -1,7 +1,7 @@
 CC = gcc
 CFLAGS = -Wall -g -O3
 
-all: Serveur Client
+all: clean Serveur Client
 
 clean:
 	rm -Rf *.o *.out Client Serveur
