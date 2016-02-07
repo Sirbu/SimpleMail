@@ -78,7 +78,7 @@ int main(){
 
         }
         else if(choix == 'f'){
-            //lire();
+            lire();
             afficher_menu2();
             choix=fgetc(stdin);
 

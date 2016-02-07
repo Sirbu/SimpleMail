@@ -288,6 +288,7 @@ int authentification(char *login){
 	fgets(login,TAILLE_ID,stdin);
 	login[strlen(login)-1]='\0';/*elimination du retour a la ligne*/
 	printf("password: ");
+	//password=getpass("password : ");
 	fgets(password,TAILLE_ID,stdin);
 	password[strlen(password)-1]='\0';/*elimination du retour a la ligne*/
 	//password = getpass("password:");
@@ -449,15 +450,15 @@ void check(){
 
 	char *response = Reception();
 
-	if (response!=NULL){
+	if (response!=NULL){// teste de la requette
 
 		sscanf(response,"check/%d/;",&code_ret);//extraction des parametres
 
     }
-	else
+	else{
+		printf("une erreur s'est produite !!\n");
 		exit(INTERN_ERROR);
-
-
+	}
 	printf("vous avez %d nouveaux message\n",code_ret);
 	free(request);//liberation de la memoire allouée
 	free(response);
@@ -475,6 +476,7 @@ void afficher_menu1(){
 	printf("en attente de votre choix: \n");
 }
 /*affiche le menu secondaire
+ * correspendant au choix c
 */
 void afficher_menu2(){
 	printf("\n*************************************************************\n");
@@ -498,7 +500,7 @@ void afficher_menu2(){
 void list(char *param){
 	char*request = (char*)malloc(TAILLE_REQUETTE);
 	teste_malloc(request);
-	int nbre = 0 ;
+	int nbre =2 ;
 	int i = 0;
 	int j= 0;
 	int pos=0;
@@ -507,38 +509,38 @@ void list(char *param){
 	char etat;
 	sprintf(request,"list/%s/;",param);//formulation de la requette
 	Emission(request);
+	free(request);//liberation de la memoire
 
-	char* response = Reception();
+	char* response = Reception();// reception de la premiere requette qui nous indiquera le nombre de message
+								//pour pouvoir se synchroniser a l'aide d'une boucle
 
-	if (response != NULL ){
+	if (response != NULL ){// test de la requette
 		sscanf(response,"info/%d/;",&nbre);
 	}
 	else
 		exit(INTERN_ERROR);
-		//traitement du cas ou une erreur s'est produite
-	if(nbre == SERV_ERROR){
-		printf("une erreur s'est produite");
-		exit(SERV_ERROR);
-	}
 
 
 	if (nbre == 0){
 		free(response);
 		printf("vous n'avez aucun nouveaux message ");
 	}
-	else{
+	else{// on rentre dans une boucle pour recevoir les requette l'une a la suite des autres
 
 		for(j = 1 ; j <= nbre ; j++){// reception,extraction puis affichage des parametres
-			i = 7;
-			pos=0;
-			char *response=Reception();
-			printf("%s\n",response );
-			//extraction
-			if(response == NULL){
+			pos=0;// rise a zero
+			char *response=Reception();//recetpion
+
+			if(response == NULL){// teste de la requette
 				printf("une erreur s'est produite");
 				exit(SERV_ERROR);
 			}
-			etat=response[5];
+			printf("[DEBBUG]%s\n",response );//DEBBUG
+
+			etat=response[5];// on recupere le deuxiemme champ(info/etat/expediteur/objet/;)
+			i = 7;// on se place au dedut du champ de l'expediteur : info/etat/expediteur/objet/;
+
+			// on recupere les champs en question caractere par caractere
 			while(response[i] != '/'){
 				expediteur[pos] = response[i];
 				i++;
@@ -547,15 +549,17 @@ void list(char *param){
 			expediteur[pos] = '\0';
 			i++;
 			pos=0;
-			while(response[i] != '/'){
+
+			while(response[i] != '/' && response[i+1] != ';'){
 				objet[pos] =response[i];
 				i++;
 				pos++;
 			}
 			objet[pos] = '\0';
-			if(etat == '0'){
+			// une fois ici on aura recuperer les champs requis pour l'affichage
+			if(etat == '0'){//on affichera les infos des message non lus en couleur
 				couleur("41");
-				printf("<%d> expediteur : %s",j,expediteur);
+				printf(" NON LU <%d> expediteur : %s",j,expediteur);
 				couleur("0");
 				printf("\n");
 				couleur("41");
@@ -567,42 +571,40 @@ void list(char *param){
 				printf("\n");
 
 		    }
-			else{
+			else{// si il est deja lu on l'affiche normalement
 				printf("<%d> expediteur : %s \n objet : %s\n ***************************************\n",j,expediteur,objet);
 
 			}
-			// vider le tableau
+			// vider les chaine de caracteres
 			bzero(expediteur,TAILLE_ID);
 			bzero(objet,TAILLE_PASSWORD);
-			free (response);
+			free (response);// liberation de la memoire allouee par strdup
 		}
 	}
-	free(request);
-	free (response);
+
 }
 /*ce sous programme se chargera de demander a l'utilisateur
 *le message qu'il voudra lire puis le luis affichera
 */
-/*
+
 void lire(){
 	char request[TAILLE_REQUETTE];
-	teste_malloc(request);
 	char expediteur[TAILLE_ID];
 	char objet[TAILLE_PASSWORD];
 	char contenu[TAILLE_CONETENU];
 	char param[4];
-	int i=5;
+	int i=5;//on se place directement
 	int pos=0;
 	char nbre;
 	printf("voulez vous lire un ancien message ou un nouveau new/nouveau ou all/ancien\n");
-	fgets(param,);
+	fgets(param,4,stdin);
+	viderBuffer();
 	printf("rentrez le numero du message a lire :  ");
-
 	nbre=getchar();
 	viderBuffer();
 
 	sprintf(request,"read/%c/;",nbre);
-
+	list("all");
 	Emission(request);
 
 	char* response = Reception();
@@ -610,12 +612,7 @@ void lire(){
 		printf("une erreur s'est produite /n");
 		exit(INTERN_ERROR);
 	}
-	char* response=Reception();
-	if (char == NULL){
-		printf("une erreur s'est produite veuillez reessayer ulterieurement\n");
-		exit(INTERN_ERROR);
-	}
-
+	printf("[debbug] %s\n",response );
 	while(response[i]!='/'){
 		expediteur[pos]=response[i];
 		i++;
@@ -638,11 +635,7 @@ void lire(){
 		pos++;
 	}
 	contenu[pos]='\0';
-	printf("****************************************************************************\n
-			expediteur: %s\n
-			objet: %s\n
-			contenu: %s\n**************************************************************************\n",expediteur,objet,contenu);
+	printf("****************************************************************************\nexpediteur: %s\nobjet: %s\ncontenu: %s\n**************************************************************************\n",expediteur,objet,contenu);
 
 	free(response);
 }
-:*/
