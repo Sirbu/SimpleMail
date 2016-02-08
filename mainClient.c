@@ -8,7 +8,7 @@ int main(){
     char continuer ='y';
     char choix='b';//initialisation pour le premier tour de boucle
     printf("rentrer @ :\n");
-    fgets(machine,16,stdin);
+    fgets(machine,16,stdin);// @ip
     machine[15]='\0';
     system("clear");// nettoie le terminal
 
@@ -35,8 +35,10 @@ int main(){
 
     }while( ret == AUTH_ERROR && continuer == 'y' );
 
-    if(ret != NO_PB )
-      exit(AUTH_ERROR);
+    if(ret != NO_PB ){
+        printf("++++++++++++++++a bientot!!+++++++++++++++++\n");
+        exit(AUTH_ERROR);
+  }
 
     system("clear");
 
@@ -89,6 +91,7 @@ int main(){
             choix=fgetc(stdin);
         }
         else if (choix== 'h'){
+            supprimer();
             afficher_menu2();
             choix=getchar();
         }

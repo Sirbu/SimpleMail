@@ -54,13 +54,6 @@ int EmissionBinaire(char *donnees, size_t taille);
  */
 void Terminaison();
 
-/*le sous programme teste les malloc
- *affiche un message de'erreur et exit en cas
- *de probléme
- */
-
-void teste_malloc(char *ptr);
-
 /*le sous programme s'occupe de vider le buffer
 */
 void viderBuffer();
@@ -95,11 +88,16 @@ void afficher_menu2();
 /*sous programme qui se chargera de l'affichage
  * des en-tetes des  messages(nouveaux/tout)
  * elle prendra en parametre new ou all
+ *et va renvoyer le numero de message
 */
-void list(char *param);
+int list(char *param);
 /*ce sous programme se chargera de demander a l'utilisateur
 *le message qu'il voudra lire puis le luis affichera
 */
 void lire();
 
+/*ce sous programme se chargera
+*de la suppression d'un message
+*/
+void supprimer();
 #endif

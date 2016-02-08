@@ -258,16 +258,6 @@ void viderBuffer()
     }
 }
 
-/*teste de malloc
-*/
-void teste_malloc(char *ptr){
-
-	if (ptr==NULL){
-		printf("une erreur s'est produite!!! erreur de memoire\n");
-		exit(INTERN_ERROR);
-	}
-}
-
 
 /*authentification
 
@@ -275,11 +265,8 @@ void teste_malloc(char *ptr){
 int authentification(char *login){
 	int code_ret;
 	char request[TAILLE_REQUETTE];
+	char password[TAILLE_PASSWORD];
 
-	teste_malloc(request);
-
-	char * password=(char*)malloc(TAILLE_PASSWORD);
-	teste_malloc(password);
 	/********************************************************/
 
 	printf("bienvenue sur votre messagerie\n !!");
@@ -288,18 +275,15 @@ int authentification(char *login){
 	fgets(login,TAILLE_ID,stdin);
 	login[strlen(login)-1]='\0';/*elimination du retour a la ligne*/
 	printf("password: ");
-	//password=getpass("password : ");
-	fgets(password,TAILLE_ID,stdin);
+	fgets(password,TAILLE_PASSWORD,stdin);
 	password[strlen(password)-1]='\0';/*elimination du retour a la ligne*/
-	//password = getpass("password:");
+
 	/*cryptage du mot de passe avant l'envoie*/
 	strncpy(password,crypt(password,"$6$"),TAILLE_PASSWORD);
 
 	/*formulation de la requette*/
 
 	sprintf(request,"authentification/%s/%s/;",login,password);
-
-
 	/*envoie de la requette*/
 	printf("la requette %s\n",request);
 
@@ -308,14 +292,15 @@ int authentification(char *login){
 	/*attente de la reponse*/
 	char *response=Reception();
 
-	if (response!=NULL){
-		sscanf(response,"return/%d/;",&code_ret);
-		return (code_ret);
+	if (response==NULL || sscanf(response,"return/%d/;",&code_ret) != 1 ){
+		printf("une erreur s'est produite!!\n");
+		exit(INTERN_ERROR);
+
     }
 	else
-		return(INTERN_ERROR);
-	free(request);//liberation de la memoire allouée
-	free(response);
+		return (code_ret);
+
+	free(response);//liberation de la memoire allouee par strdup
 }
 
 /*ce sous programme prend en paramettre @ de l'expediteur
@@ -327,9 +312,9 @@ void Envoyermessage(char login[]){
 	char dest[TAILLE_ID];
 	char objet[TAILLE_PASSWORD];
 	char contenu[TAILLE_CONETENU];
-	char *request=(char *)malloc(TAILLE_REQUETTE);
+	char request[TAILLE_REQUETTE];
 
- 	teste_malloc(request);
+
 
 
 	int code_ret;
@@ -340,13 +325,13 @@ void Envoyermessage(char login[]){
 	dest[strlen(dest)-1]='\0';
 
 	printf("veuillez saisir objet: ");
-	fgets(objet,TAILLE_PASSWORD,stdin);
-	objet[strlen(objet)-1]='\0';
+	fgets(objet,TAILLE_PASSWORD,stdin);//etant donnée qu'on avait defini une taille assez grande pour le password je l'ai reutiliser ici
+	objet[strlen(objet)-1]='\0';// elimination de retour a la ligne
 
-
-	printf("veuillez saisir votre message : ");
+	printf("veuillez saisonir votre message : ");
 	fgets(contenu,TAILLE_CONETENU,stdin);
 	contenu[strlen(contenu)-1]='\0';
+
 	/*formulation de la requette*/
 	sprintf(request,"send/%s/%s/%s/%s/;",login,dest,objet,contenu);
     /*envoie de la requette*/
@@ -357,21 +342,17 @@ void Envoyermessage(char login[]){
 
 	char* response=Reception();
 
-	if (response != NULL)
-		sscanf(response,"return/%d/;",&code_ret);
-	else
+	if (response == NULL || sscanf(response,"return/%d/;",&code_ret)!=1 || code_ret == SERV_ERROR){
+		printf("une erreur s'est produite");
 		exit(INTERN_ERROR);
 
-	if (code_ret == SERV_ERROR){
-		printf("erreur de serveur!!! reessayer ulterieurement\n");
-		exit(SERV_ERROR);
 	}
+
 	else if (code_ret == NO_PB)
 		printf("message envoyé avec succés !!\n");
 
 
 	else{
-
 			printf("vous vous etes tropmé de destinataire voulez vous reessayer? o/oui n/non ");
 			continuer=fgetc(stdin);
 			viderBuffer();
@@ -381,7 +362,7 @@ void Envoyermessage(char login[]){
 
 				fgets(dest,TAILLE_ID,stdin);
 				dest[strlen(dest)-1]='\0';
-				//viderBuffer();
+
 				bzero(request,TAILLE_REQUETTE);//on vide la chaine de charactere
 
 				/*formulation de la requette*/
@@ -391,10 +372,9 @@ void Envoyermessage(char login[]){
 
 				response=Reception();
 
-				if (response!=NULL)
-					sscanf(response,"return/%d/;",&code_ret);
-				else
+				if (response ==NULL || sscanf(response,"return/%d/;",&code_ret)!=1 )
 					exit(INTERN_ERROR);
+
 				if(code_ret== DEST_ERROR ){
 					printf("vous vous etes tropmé de destinataire voulez vous reessayer? o/oui n/non ");
 					continuer=fgetc(stdin);
@@ -408,16 +388,10 @@ void Envoyermessage(char login[]){
 
 		if (code_ret== NO_PB)
 			printf("message envoyé avec succès\n");
-		else if (code_ret == SERV_ERROR){// dans ce cas de figure l
-			printf ("une erreur s'est produite merci de reinitialiser votre connexion\n ");
-			exit(SERV_ERROR);
-		}
-
 
 
 
 	}// une fois ici c'est que tout s'est bien passé(reussi a envoyer ou abandonne )
-	free(request);//liberation de la memoire allouée
 	free (response);
 }
 
@@ -425,13 +399,8 @@ void Envoyermessage(char login[]){
 */
 void deconnexion(){
 
-	char *request=(char*)malloc(TAILLE_REQUETTE);
-	teste_malloc(request);
-	strcpy(request,"disc/;");
-	Emission(request);
+	Emission("disc/;");
 	printf("***************************\n vous ete maintenant deconnécté ,à bientot\n***************************\n");
-
-	free(request);//liberation de la memoire allouée
 }
 
 /*le sous programme se chargera
@@ -441,26 +410,19 @@ void deconnexion(){
 
 void check(){
 
-	char*request=(char*)malloc(TAILLE_REQUETTE);
-	teste_malloc(request);
 	int code_ret;
-	strcpy(request,"check/;");
 
-	Emission(request);//envoie de la requette
+	Emission("check/;");//envoie de la requette
 
 	char *response = Reception();
 
-	if (response!=NULL){// teste de la requette
-
-		sscanf(response,"check/%d/;",&code_ret);//extraction des parametres
+	if (response == NULL || sscanf(response,"check/%d/;",&code_ret)!= 1){// teste de la requette
+				printf("une erreur intern s'est produite");
+				exit(INTERN_ERROR);
 
     }
-	else{
-		printf("une erreur s'est produite !!\n");
-		exit(INTERN_ERROR);
-	}
+
 	printf("vous avez %d nouveaux message\n",code_ret);
-	free(request);//liberation de la memoire allouée
 	free(response);
 }
 /*affiche le menu principale
@@ -496,39 +458,35 @@ void afficher_menu2(){
 }
 /*sous programme qui se chargera de l'affichage
  * des en-tetes des  messages(nouveaux/tout)
+ elle renverra aussi le nombre de message
 */
-void list(char *param){
-	char*request = (char*)malloc(TAILLE_REQUETTE);
-	teste_malloc(request);
-	int nbre =2 ;
-	int i = 0;
+int list(char *param){
+	char request[TAILLE_REQUETTE];
+	int nbre ;
 	int j= 0;
 	int pos=0;
 	char expediteur[TAILLE_ID];
 	char objet[TAILLE_PASSWORD];
 	char etat;
+	char *paid;
 	sprintf(request,"list/%s/;",param);//formulation de la requette
 	Emission(request);
-	free(request);//liberation de la memoire
 
 	char* response = Reception();// reception de la premiere requette qui nous indiquera le nombre de message
 								//pour pouvoir se synchroniser a l'aide d'une boucle
 
-	if (response != NULL ){// test de la requette
-		sscanf(response,"info/%d/;",&nbre);
-	}
-	else
+	if (response == NULL || sscanf(response,"info/%d/;",&nbre)!= 1)// test de la requette
+
 		exit(INTERN_ERROR);
 
 
 	if (nbre == 0){
-		free(response);
 		printf("vous n'avez aucun nouveaux message ");
 	}
 	else{// on rentre dans une boucle pour recevoir les requette l'une a la suite des autres
 
 		for(j = 1 ; j <= nbre ; j++){// reception,extraction puis affichage des parametres
-			pos=0;// rise a zero
+
 			char *response=Reception();//recetpion
 
 			if(response == NULL){// teste de la requette
@@ -536,23 +494,24 @@ void list(char *param){
 				exit(SERV_ERROR);
 			}
 			printf("[DEBBUG]%s\n",response );//DEBBUG
-
-			etat=response[5];// on recupere le deuxiemme champ(info/etat/expediteur/objet/;)
-			i = 7;// on se place au dedut du champ de l'expediteur : info/etat/expediteur/objet/;
-
+			pos=0;//remise a zero du compteur
+			paid=strchr(response,'/');// paid pointera sur le premier '/' trouvé
+			paid++;// on recupere le deuxiemme champ(info/etat/expediteur/objet/;)
+			etat=(*paid);
+			paid=paid+2;
 			// on recupere les champs en question caractere par caractere
-			while(response[i] != '/'){
-				expediteur[pos] = response[i];
-				i++;
+			while((*paid) != '/'){
+				expediteur[pos] =(*paid);
 				pos++;
+				paid++;
 			}
-			expediteur[pos] = '\0';
-			i++;
+			expediteur[pos] = '\0';//terminer la chaine correctement
+			paid++;
 			pos=0;
 
-			while(response[i] != '/' && response[i+1] != ';'){
-				objet[pos] =response[i];
-				i++;
+			while((*paid) != '/' && (*(paid+1)) != ';'){
+				objet[pos] =(*paid);
+				paid++;
 				pos++;
 			}
 			objet[pos] = '\0';
@@ -581,7 +540,7 @@ void list(char *param){
 			free (response);// liberation de la memoire allouee par strdup
 		}
 	}
-
+	return nbre;
 }
 /*ce sous programme se chargera de demander a l'utilisateur
 *le message qu'il voudra lire puis le luis affichera
@@ -592,50 +551,119 @@ void lire(){
 	char expediteur[TAILLE_ID];
 	char objet[TAILLE_PASSWORD];
 	char contenu[TAILLE_CONETENU];
-	char param[4];
-	int i=5;//on se place directement
+	int i=8;//on se place directement sur le debut du champ objet
 	int pos=0;
-	char nbre;
-	printf("voulez vous lire un ancien message ou un nouveau new/nouveau ou all/ancien\n");
-	fgets(param,4,stdin);
-	viderBuffer();
-	printf("rentrez le numero du message a lire :  ");
-	nbre=getchar();
-	viderBuffer();
+	int nbre=0;
+	char rep='o';
 
-	sprintf(request,"read/%c/;",nbre);
-	list("all");
-	Emission(request);
+	//permettre a l'utilisateur d'avoir les message sous les yeux
 
-	char* response = Reception();
-	if (response == NULL){
-		printf("une erreur s'est produite /n");
-		exit(INTERN_ERROR);
-	}
-	printf("[debbug] %s\n",response );
-	while(response[i]!='/'){
-		expediteur[pos]=response[i];
-		i++;
-		pos++;
-	}
-	expediteur[pos]='\0';
-	pos=0;
-	i++;
-	while (response[i]!='/'){
-		objet[pos]=response[i];
-		i++;
-		pos++;
-	}
-	objet[pos]='\0';
-	pos=0;
-	i++;
-	while(response[i]!='\0' && response[i+1]!=';'){//etant donnée que la requette se termine par /;
-		contenu[pos]=response[i];
-		i++;
-		pos++;
-	}
-	contenu[pos]='\0';
-	printf("****************************************************************************\nexpediteur: %s\nobjet: %s\ncontenu: %s\n**************************************************************************\n",expediteur,objet,contenu);
+	int code_ret=list("all");
 
-	free(response);
+	if (code_ret){// on ne lui demandera de la saisie du message que si effectivement il en a
+
+		do{
+			printf("rentrez le numero du message a lire (entre 1 et %d) :  ",code_ret);
+			scanf("%d",&nbre);
+			viderBuffer();
+			if ( nbre > code_ret){
+				printf("vous avez saisi un mauvais numero voulez vous ressaisir ? o/n" );
+				rep=getchar();
+				viderBuffer();
+			}
+
+		}while( rep == 'o' && nbre> code_ret);
+
+		if (nbre <= code_ret){
+
+			sprintf(request,"read/%d/;",nbre);
+
+			Emission(request);
+
+			char* response = Reception();
+			if (response == NULL){
+				printf("une erreur s'est produite /n");
+				exit(INTERN_ERROR);
+			}
+			printf("[debbug] %s\n",response );
+
+			while(response[i]!='/'){// recuperation du champ expediteur
+				expediteur[pos]=response[i];
+				i++;
+				pos++;
+			}
+			expediteur[pos]='\0';
+			pos=0;
+			i++;
+			while (response[i]!='/'){//recuperation de l'objet
+				objet[pos]=response[i];
+				i++;
+				pos++;
+			}
+			objet[pos]='\0';
+			pos=0;
+			i++;
+			while(response[i]!='\0' && response[i+1]!=';'){//etant donnée que la requette se termine par /;
+				contenu[pos]=response[i];
+				i++;
+				pos++;
+			}
+			contenu[pos]='\0';
+			printf("****************************************************************************\nexpediteur: %s\nobjet: %s\ncontenu: %s\n**************************************************************************\n",expediteur,objet,contenu);
+
+			free(response);
+		}
+	}
+}
+
+/*ce sous programme se chargera
+*de la suppression d'un message
+*/
+void supprimer(){
+	char request[TAILLE_REQUETTE];
+	int num;
+	int nbre_message=list("all");
+	char rep='o';
+
+	if( nbre_message ){// il ne supprimera des message que si l'on a au moins 1
+
+		do{
+			printf("rentrez le numero du message a supprimer (entre 1 et %d) :  ",nbre_message);
+			scanf("%d",&num);
+			viderBuffer();
+			if ( num > nbre_message){
+				printf("vous avez saisi un mauvais numero voulez vous ressaisir ? o/n " );
+				rep=getchar();
+				viderBuffer();
+			}
+		}while(rep=='o' && num > nbre_message);
+
+		if ( num <= nbre_message){
+			printf("etes vous sur de vouloir supprimer ?? o/n ");
+			rep=getchar();
+			viderBuffer();
+			if( rep == 'o'){
+				sprintf(request,"delete/%d/;",num);
+				Emission(request);
+
+				char *response=Reception();
+
+				if( response == NULL || sscanf(response,"return/%d/;",&num) != 1 ){
+					printf("une erreur s'est produite [delete] \n" );
+					exit(INTERN_ERROR);
+				}
+				if(num== NO_PB)
+					printf("message supprimé avec succes");
+				else
+					printf("le message n'a pas pu etre supprimer");
+				free(response);
+			}
+
+
+		}
+
+
+	}
+
+
 }
