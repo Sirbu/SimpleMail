@@ -106,6 +106,7 @@ int main(void)
                 envoi_reponse(SERV_ERROR);
             }
 
+            free(requete);
         }
 
     }
