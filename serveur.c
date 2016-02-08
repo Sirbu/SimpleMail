@@ -404,52 +404,65 @@ int parseLoginPass(char* requete, char* login, char* password)
 // 1 si le login ou le mot de passe n'est pas bon
 int checkCredentials(char* login, char* password)
 {
+	// indique si on a trouvé la ligne
+	// correspondant au login dans le fichier bdd
+	// 0 pour non
+	// 1 pour oui
+	int found = 1;
+	int i = 0;
+
 	// permettra de stocker une ligne du fichier
 	char line[LINE_LENGTH];
 
-	// détermine si on a trouvé le login dans le fichier
-	int found = 0;
+	FILE* auth_file = NULL;
 
 	// pointeur placé à la jonction dans la ligne
 	// entre login et password
 	char* p_pass = NULL;
 
-	FILE* auth_file = fopen("bdd", "r");
+	if(checkLogin(login) != 1)
+	{
+		return AUTH_ERROR;
+	}
+
+	auth_file = fopen("bdd", "r");
 	if(auth_file == NULL)
 	{
-		fprintf(stderr, "[-] Error : Impossible to open the database file !\n");
-		return 1;
+		fprintf(stderr, "[-] FATAL ERROR : carnet d'adressses introuvable\n");
+		envoi_reponse(SERV_ERROR);
+		return SERV_ERROR;
 	}
 
-	while(!found && fgets(line, LINE_LENGTH, auth_file) != NULL)
+	do
 	{
-		// printf("[D] login = %s\nLine = %s\n", login, line);
-		if(strstr(line, login) != NULL)
+		i = 0;
+		// au départ, on estime que le login est bien
+		// sur cette ligne.
+		found = 1;
+		fgets(line, 500, auth_file);
+		// permet d'enlever le newline qui fait chier
+		line[strlen(line)-1] = '\0';
+
+		// on cherche le login pour savoir si c'est
+		// la bonne ligne
+		while(line[i] != ':' && login[i] != '\0')
 		{
-			found = 1;
+			if(login[i] != line[i])
+			{
+				found = 0;
+			}
+			i++;
 		}
-	}
 
-	if(!found)
-	{
-		// si le login n'est pas trouvé dans le fichier...
-		fprintf(stderr, "[-] Erreur : login %s introuvable !\n", login);
-		fclose(auth_file);
-		return 1;
-	}
+	}while(!found);
 
-	// permet d'enlever le newline qui fait chier
-	line[strlen(line)-1] = '\0';
 
 	p_pass = strchr(line, ':');
 	if(p_pass == NULL)
 	{
 		fprintf(stderr, "[-] Erreur : Fichier d'authentification corrompu !\n");
-		fclose(auth_file);
 		exit(EXIT_FAILURE);
 	}
-
-	fclose(auth_file);
 
 	// on retourne le réultat de la comparaison
 	// du hash reçu avec celui dans le fichier
@@ -487,7 +500,7 @@ int authentification(char* requete, char* login, char* password)
 	if(checkCredentials(login, password) == 0)
 	{
 		printf("[+] Authentification validée !\n");
-		printf("[+] Bienvenue %s!\n", login);
+		printf("[+] Bienvenue %s !\n", login);
 
 		envoi_reponse(NO_PB);
 		// est authentifié
@@ -496,7 +509,7 @@ int authentification(char* requete, char* login, char* password)
 	else
 	{
 		printf("[+] Authentification refusée !\n");
-		printf("[+] Dégage %s!\n", login);
+		printf("[+] Dégage %s !\n", login);
 		// n'est pas authentifié
 		envoi_reponse(AUTH_ERROR);
 
@@ -625,9 +638,6 @@ int parseMessage(char* requete, Message* mail)
 // Retourne un code d'erreur si problème, sinon 0
 int sendMessage(char* requete)
 {
-	// identifcateur du fichier message
-	FILE* fichier_mess = NULL;
-
 	// chaine contenant le nom du fichier message
 	char filename[TAILLE_FILENAME];
 
@@ -646,9 +656,10 @@ int sendMessage(char* requete)
 	afficherMessage(mail);
 
 	// vérification de l'existence du destinataire
-	if(checkDest(mail->dest) == 0)
+	if(checkLogin(mail->dest) == 0)
 	{
 		envoi_reponse(DEST_ERROR);
+		fprintf(stderr, "[-] Erreur : utilisateur %s introuvable !\n", mail->dest);
 		return DEST_ERROR;
 	}
 
@@ -688,42 +699,37 @@ int sendMessage(char* requete)
 
 	// printf("[D] filename = %s\n", filename);
 
-	fichier_mess = fopen(filename, "w");
-	if(fichier_mess == NULL)
+	if(ecrireMessage(mail, filename) == 0)
 	{
-		fprintf(stderr, "[-] Erreur : Ouverture en écriture du fichier message impossible !\n");
+		envoi_reponse(NO_PB);
+	}
+	else
+	{
 		envoi_reponse(SERV_ERROR);
+		fprintf(stderr, "[-] Erreur : écriture impossible dans %s\n", filename);
+		fprintf(stderr, "[-] Envoi du message impossible !\n");
 		return SERV_ERROR;
 	}
-
-	// ce bout de code ne fonctionne pas...
-	// if((ret = fwrite(mail, sizeof(Message), 1, fichier_mess)) != 1)
-	// {
-	// 	fprintf(stderr, "[-] Erreur : problème lors de l'écriture !\n");
-	// 	perror(filename);
-	// 	envoi_reponse(SERV_ERROR);
-	// 	return SERV_ERROR;
-	// }
-	fprintf(fichier_mess, "%c\n%s\n%s\n%s\n%s\n",
-		(char)mail->lu, mail->src, mail->dest, mail->obj, mail->mess);
-
-	envoi_reponse(NO_PB);
-
-	fclose(fichier_mess);
 
 	return 0;
 }
 
 // retoune un code d'erreur si problème
-// 0 si le destinataire n'existe pas
+// 0 si le login n'existe pas
 // 1 si il existe
-int checkDest(char* destinataire)
+int checkLogin(char* login)
 {
 	// ligne lue dans le fichier d'authentification
 	char line[500];
 
-	// 0 si le destinataire n'existe pas
-	// et 1 sinon
+	// va contenir le login présent dans le fichier
+	char credential[TAILLE_LOGIN];
+
+	// permet de se positionner sur line
+	char* p_line = NULL;
+
+	// 0 si le login n'existe pas
+	// et 1 si il existe
 	int existe = 0;
 
 	FILE* auth_file = fopen("bdd", "r");
@@ -734,16 +740,31 @@ int checkDest(char* destinataire)
 		return SERV_ERROR;
 	}
 
-	// tant qu'on est pas à la fin du fichier ou que existe
-	while(fgets(line, 500, auth_file) != NULL && existe != 1)
+	// tant qu'on est pas à la fin du fichier ou que existe = 1
+	while(fgets(line, 500, auth_file) != NULL && existe == 0)
 	{
-		if(strstr(line, destinataire) != NULL)
+		bzero(credential, TAILLE_LOGIN);
+		p_line = strchr(line, ':');
+
+		if(p_line == NULL)
+		{
+			fprintf(stderr, "[-] Erreur : carnet d'adresses corrompu !\n");
+			envoi_reponse(SERV_ERROR);
+			fclose(auth_file);
+			return SERV_ERROR;
+		}
+
+		strncpy(credential, line, (int)(p_line-line));
+
+		if(!strncmp(credential, login, TAILLE_LOGIN))
 		{
 			existe = 1;
 		}
 	}
 
 	fclose(auth_file);
+
+	// printf("[D] login = %s\n[D] cred  = %s\n[D] existe = %d\n", login, credential, existe);
 
 	return existe;
 }
@@ -1000,12 +1021,8 @@ int readMessage(char* requete, char* login)
 	// bah c'est un i quoi...
 	int i = 0;
 
-	// contient le paramètre (new|all)
-	char param[5] = {0};
-
-	// va permettre de se positionner
-	// sur la requete
-	char* p_requete = NULL;
+	// réponse du serveur
+	char reponse[TAILLE_REQ];
 
 	// représente le dossier
 	DIR* boite_mail = NULL;
@@ -1017,36 +1034,15 @@ int readMessage(char* requete, char* login)
 	// représente l'élément courant du dossier
 	struct dirent* fichier_mess = NULL;
 
-	Message* mail = NULL;
+	Message* mail = createMessage();
 
 	// extraction des paramètres...
 	// je sais c'est laborieux, faut que je refactorise
 	// ça dans une fonction
-	p_requete = strchr(requete, '/');
-	if(p_requete == NULL)
+	if(sscanf(requete, "read/%d/;", &num_mess) != 1)
 	{
-		fprintf(stderr, "[-] Erreur : problème de paramètres\n");
+		fprintf(stderr, "[-] Erreur : Numéro du message manquant !\n");
 		envoi_reponse(READ_ERROR);
-		return READ_ERROR;
-	}
-	p_requete++;
-
-	num_mess = *p_requete;
-
-	p_requete = strchr(requete, '/');
-	if(p_requete == NULL)
-	{
-		fprintf(stderr, "[-] Erreur : problème de paramètres\n");
-		envoi_reponse(READ_ERROR);
-		return READ_ERROR;
-	}
-	p_requete++;
-
-	// le paramètre (new|all) ne fait
-	// que 3 caractères.
-	for(i = 0; i < 3; i++)
-	{
-		param[i] = *(p_requete++);
 	}
 
 	boite_mail = opendir(login);
@@ -1058,7 +1054,7 @@ int readMessage(char* requete, char* login)
 	}
 
 	i = 1;
-	while((fichier_mess = readdir(boite_mail)) != NULL || i <= num_mess)
+	while((i <= num_mess) && ((fichier_mess = readdir(boite_mail)) != NULL) )
 	{
 		// on ne doit pas prendre en compte
 		// les dossiers '.' et '..'
@@ -1070,28 +1066,44 @@ int readMessage(char* requete, char* login)
 			if(lireMessage(mail, filename) != 0)
 			{
 				fprintf(stderr, "[-] Erreur : lireMessage(%s)\n", filename);
+				closedir(boite_mail);
 				return SERV_ERROR;
 			}
 
-			if(strncmp(param, "new", 3) == 0)
-			{
-				if((char)mail->lu == '0')
-				{
-					printf("[+] Affichage du message à envoyer :\n");
-					afficherMessage(mail);
+			printf("[+] Affichage du message à envoyer :\n");
+			afficherMessage(mail);
 
-					i++;
-				}
-			}
-			else
-			{
-				printf("[+] Affichage du message à envoyer :\n");
-				afficherMessage(mail);
-
-				i++;
-			}
+			i++;
 		}
 	}
+
+	// cela veut dire que l'on a pas trouvé le message
+	// correspondant au numéro demandé.
+	if(fichier_mess == NULL)
+	{
+		fprintf(stderr, "[-] Erreur : Message n°%d introuvable !\n", num_mess);
+		envoi_reponse(READ_ERROR);
+		closedir(boite_mail);
+		return READ_ERROR;
+	}
+	else
+	{
+		// on marque le message comme lu.
+		mail->lu = '1';
+		if(ecrireMessage(mail, filename) != 0)
+		{
+			envoi_reponse(SERV_ERROR);
+			closedir(boite_mail);
+		}
+	}
+
+	sprintf(reponse, "message/%s/%s/%s/;\n", mail->src, mail->obj, mail->mess);
+
+	printf("[D] Reponse %s\n", reponse);
+
+	Emission(reponse);
+
+	closedir(boite_mail);
 
 	return 0;
 }
@@ -1115,7 +1127,12 @@ int deleteMessage(char* requete, char* login)
 	// représente l'élément courant du dossier
 	struct dirent* fichier_mess = NULL;
 
-	sscanf(requete, "delete/%d/;", &num_mess);
+	if(sscanf(requete, "delete/%d/;", &num_mess) != 1)
+	{
+		fprintf(stderr, "[-] Erreur : Aucun numéro donné !\n");
+		envoi_reponse(DEL_ERROR);
+		return DEL_ERROR;
+	}
 
 	boite_mail = opendir(login);
 	if(boite_mail == NULL)
@@ -1126,15 +1143,16 @@ int deleteMessage(char* requete, char* login)
 	}
 
 	i = 1;
-	while((fichier_mess = readdir(boite_mail)) != NULL || i <= num_mess)
+	while((i <= num_mess) && ((fichier_mess = readdir(boite_mail)) != NULL))
 	{
 		if(strchr(fichier_mess->d_name, '.') == NULL)
 		{
 			printf("[D] Message %d\n", i);
-			sprintf(filename, "%s/%s", login, fichier_mess->d_name);
 			i++;
 		}
 	}
+
+	sprintf(filename, "%s/%s", login, fichier_mess->d_name);
 
 	if(remove(filename) != 0)
 	{
@@ -1174,6 +1192,10 @@ int deleteMessage(char* requete, char* login)
 // Lit le message contenu dans le fichier donné en paramètre.
 // et le stocke dans la structure Message pointée par mail
 // Retourne un code d'erreur si il y en a une. 0 sinon
+// la fonction est pas très jolie(comme pas mal d'autres endroits
+// dans le code...), mais je refactoriserai
+// le code dans sa globalité plus tard. Là on a pas des masses
+// de temps.
 int lireMessage(Message* mail, char* fichier)
 {
 	FILE* fic = fopen(fichier, "r");
@@ -1184,58 +1206,57 @@ int lireMessage(Message* mail, char* fichier)
 		return(SERV_ERROR);
 	}
 
-	if(fscanf(fic, "%c\n", &mail->lu) != 1)
+	mail->lu = (char)fgetc(fic);
+
+	fgetc(fic);
+
+	if(fgets(mail->src, TAILLE_LOGIN, fic) == NULL)
 	{
-		fprintf(stderr, "[-] Erreur : impossible de lire le message !\n");
-		envoi_reponse(SERV_ERROR);
-		fclose(fic);
+		fprintf(stderr, "[D] Erreur : lecture impossible -> %s\n", fichier);
 		return SERV_ERROR;
 	}
-
-	fgets(mail->src, TAILLE_LOGIN, fic);
 	mail->src[strlen(mail->src)-1] = '\0';
 
-	fgets(mail->dest, TAILLE_LOGIN, fic);
+	if(fgets(mail->dest, TAILLE_LOGIN, fic) == NULL)
+	{
+		fprintf(stderr, "[D] Erreur : lecture impossible -> %s\n", fichier);
+		return SERV_ERROR;
+	}
 	mail->dest[strlen(mail->dest)-1] = '\0';
 
-	fgets(mail->obj, TAILLE_OBJ, fic);
+	if(fgets(mail->obj, TAILLE_OBJ, fic) == NULL)
+	{
+		fprintf(stderr, "[D] Erreur : lecture impossible -> %s\n", fichier);
+		return SERV_ERROR;
+	}
 	mail->obj[strlen(mail->obj)-1] = '\0';
 
-	fgets(mail->mess, TAILLE_MESS, fic);
+	if(fgets(mail->mess, TAILLE_MESS, fic) == NULL)
+	{
+		fprintf(stderr, "[D] Erreur : lecture impossible -> %s\n", fichier);
+		return SERV_ERROR;
+	}
 	mail->mess[strlen(mail->mess)-1] = '\0';
-
-	// j'ai du mal à savoir si le choix
-	// taille/nbr_elmts est judicieux
-	// Je voudrais lire la totalité du fichier, dont je ne
-	// connais pas la taille, et le stocker dans la structure.
-	// Les données sont ordonnées comme il le faut.
-	// if(fread(mail, sizeof(Message), 1, fic) != 1)
-	// {
-	// 	perror("[-] Erreur lecture");
-	// 	return SERV_ERROR;
-	// }
 
 	fclose(fic);
 
 	return 0;
 }
 
+// retourne un code d'erreur si il y a un problème
+// retourne 0 si tout va bien
 int ecrireMessage(Message* mail, char* fichier)
 {
 	FILE* fic = fopen(fichier, "w");
 	if(fic == NULL)
 	{
 		printf("[-] Erreur : fichier mail %s introuvable !\n", fichier);
-		envoi_reponse(DEST_ERROR);
-		return(DEST_ERROR);
+		envoi_reponse(SERV_ERROR);
+		return(SERV_ERROR);
 	}
 
-	if(fwrite(mail, sizeof(Message), 1, fic))
-	{
-		perror("[-] Erreur écriture");
-		fclose(fic);
-		return SERV_ERROR;
-	}
+	fprintf(fic, "%c\n%s\n%s\n%s\n%s\n",
+		(char)mail->lu, mail->src, mail->dest, mail->obj, mail->mess);
 
 	fclose(fic);
 

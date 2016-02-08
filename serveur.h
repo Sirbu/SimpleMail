@@ -125,9 +125,9 @@ int parseMessage(char* requete, Message* mail);
 // gère la réception de messages
 int sendMessage(char* requete);
 
-// vérifie l'exsitence du destinataire donné
+// vérifie l'exsitence du login donné
 // en paramètre
-int checkDest(char* destinataire);
+int checkLogin(char* login);
 
 // retourne le nombre de messages non lus
 // et envoie la même valeur au client
