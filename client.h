@@ -78,7 +78,9 @@ void deconnexion();
 /*le sous programme se chargera d'informer
 */
 void check();
-
+/*affiche le menu d'entrée
+*/
+void afficher_menu();
 /*affiche le menu principale
 */
 void afficher_menu1();
@@ -100,4 +102,9 @@ void lire();
 *de la suppression d'un message
 */
 void supprimer();
+
+/*ce sous programme se charge
+ *de d'inscrire l'utilisateur
+ */
+ void inscription();
 #endif

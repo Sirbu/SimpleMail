@@ -2,6 +2,7 @@
 #include "client.h"
 #include <stdlib.h>
 int main(){
+    char principal='a';
     char login[TAILLE_ID];
     char machine[17];
     int ret;
@@ -9,7 +10,9 @@ int main(){
     char choix='b';//initialisation pour le premier tour de boucle
     printf("rentrer @ :\n");
     fgets(machine,16,stdin);// @ip
+
     machine[15]='\0';
+    //viderBuffer();
     system("clear");// nettoie le terminal
 
     if(! Initialisation(machine) ){// on traite le cas ou on a pas reussi la connexion au serveur
@@ -17,103 +20,119 @@ int main(){
         exit(INTERN_ERROR);
     }
 
-    do{
+    while (principal != 3){
 
-        if ( continuer == 'n' )/*si jamais l'utilisateur ne veut pas se reauthentifier*/
-            exit(AUTH_ERROR);
+        afficher_menu();
+        principal=getchar();
+        viderBuffer();
 
-        ret=authentification(login);
+        if(principal == '1'){
+            // l'authentification
+            do{
 
-        if ( ret != NO_PB ){
+                if ( continuer == 'n' )/*si jamais l'utilisateur ne veut pas se reauthentifier*/
+                    exit(AUTH_ERROR);
 
-            printf("*********erreur d'authentification *********\n");
-            printf("voulez vous continuer ??? y/yes n/no\n ");
-            continuer=fgetc(stdin);
-            viderBuffer();
+                    ret=authentification(login);
 
-        }
+                    if ( ret != NO_PB ){
 
-    }while( ret == AUTH_ERROR && continuer == 'y' );
+                    printf("*********erreur d'authentification *********\n");
+                    printf("voulez vous continuer ??? y/yes n/no\n ");
+                    continuer=fgetc(stdin);
+                    viderBuffer();
 
-    if(ret != NO_PB ){
-        printf("++++++++++++++++a bientot!!+++++++++++++++++\n");
-        exit(AUTH_ERROR);
-  }
+                }
 
-    system("clear");
+            }while( ret == AUTH_ERROR && continuer == 'y' );
 
-    /*une fois ici on est authentifier et on procede a l'affichage du menu*/
+            if(ret != NO_PB ){
+                printf("++++++++++++++++a bientot!!+++++++++++++++++\n");
+                exit(AUTH_ERROR);
+            }
 
-    afficher_menu1();
-    //viderBuffer();
-    choix=fgetc(stdin);
-    viderBuffer();
-    while ( choix !='a' ){// tant que le client ne veut pas quitter
-        //system("clear");
-        if ( choix == 'b' ){
+            system("clear");
 
-            Envoyermessage(login);
+            /*une fois ici on est authentifier et on procede a l'affichage du menu*/
+
             afficher_menu1();
-            choix=fgetc(stdin);
-
-        }
-
-        else if( choix == 'c' ){
-            //system("clear");
-            afficher_menu2();
-
             //viderBuffer();
             choix=fgetc(stdin);
+            viderBuffer();
+            while ( choix !='a' ){// tant que le client ne veut pas quitter
+                //system("clear");
+                if ( choix == 'b' ){
 
-            //system("clear");
-        }
-        else if ( choix == 'd' ){
-                check();
-                afficher_menu2();
-                choix=fgetc(stdin);
+                    Envoyermessage(login);
+                    afficher_menu1();
+                    choix=fgetc(stdin);
 
-        }
-        else if (choix == 'e'){
-            list("new");
-            afficher_menu2();
-            choix=fgetc(stdin);
+                }
 
-        }
-        else if(choix == 'f'){
-            lire();
-            afficher_menu2();
-            choix=fgetc(stdin);
+                else if( choix == 'c' ){
+                    //system("clear");
+                    afficher_menu2();
 
-        }
-        else if (choix == 'g'){
-            list("all");
-            afficher_menu2();
-            choix=fgetc(stdin);
-        }
-        else if (choix== 'h'){
-            supprimer();
-            afficher_menu2();
-            choix=getchar();
-        }
-        else if( choix == 'i' ){
-                afficher_menu1();
-                choix=fgetc(stdin);
-        }
-        else {
-            printf("Attention vous avez choisis une option n'existe pas ,veuillez recommencer\n");
-            afficher_menu1();
-            choix=fgetc(stdin);
+                    //viderBuffer();
+                    choix=fgetc(stdin);
 
-        }
+                    //system("clear");
+                }
+                else if ( choix == 'd' ){
+                        check();
+                        afficher_menu2();
+                        choix=fgetc(stdin);
 
-        viderBuffer();
-        system("clear");
+                }
+                else if (choix == 'e'){
+                    list("new");
+                    afficher_menu2();
+                    choix=fgetc(stdin);
+
+                }
+                else if(choix == 'f'){
+                    lire();
+                    afficher_menu2();
+                    choix=fgetc(stdin);
+
+                }
+                else if (choix == 'g'){
+                    list("all");
+                    afficher_menu2();
+                    choix=fgetc(stdin);
+                }
+                else if (choix== 'h'){
+                    supprimer();
+                    afficher_menu2();
+                    choix=getchar();
+                }
+                else if( choix == 'i' ){
+                        afficher_menu1();
+                        choix=fgetc(stdin);
+                }
+                else {
+                    printf("Attention vous avez choisis une option n'existe pas ,veuillez recommencer\n");
+                    afficher_menu1();
+                    choix=fgetc(stdin);
+
+                }
+
+                viderBuffer();
+                system("clear");
+
+
+
+            }
+            /*une fois, ici le client veut se deconnecté
+            deconnexion
+            */
+            deconnexion();
+        }
+        else if( principal == '2' ){
+            inscription();
+        }
+        else
+            return 1;
     }
-
-    /*une fois, ici le client veut se deconnecté
-     deconnexion
-    */
-    deconnexion();
-
     return 0;
 }

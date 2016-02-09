@@ -421,13 +421,30 @@ void check(){
 				exit(INTERN_ERROR);
 
     }
-
+	couleur("41");
 	printf("vous avez %d nouveaux message\n",code_ret);
+	couleur("0");
 	free(response);
+}
+/*affiche le menu d'entrée
+*/
+void afficher_menu(){
+	couleur("46");
+	printf("*************************************************************\n");
+	printf("1:vous connecter\n");
+	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
+	printf("2:s'inscrire \n");
+	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
+	printf("3:quitter\n");
+	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
+	printf("en attente de votre choix: \n");
+	couleur("0");
+
 }
 /*affiche le menu principale
 */
 void afficher_menu1(){
+	couleur("46");
 	printf("*************************************************************\n");
 	printf("a:deconnexion\n");
 	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
@@ -436,11 +453,13 @@ void afficher_menu1(){
 	printf("c:consulter vos messages\n");
 	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
 	printf("en attente de votre choix: \n");
+	couleur("0");
 }
 /*affiche le menu secondaire
  * correspendant au choix c
 */
 void afficher_menu2(){
+	couleur("46");
 	printf("\n*************************************************************\n");
 	printf("d:ya t-il des nouveaux message ?\n");
 	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
@@ -455,6 +474,7 @@ void afficher_menu2(){
 	printf("i:retourner au menu principal\n");
 	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
 	printf("en attente de votre choix: \n");
+	couleur("0");
 }
 /*sous programme qui se chargera de l'affichage
  * des en-tetes des  messages(nouveaux/tout)
@@ -518,7 +538,7 @@ int list(char *param){
 			// une fois ici on aura recuperer les champs requis pour l'affichage
 			if(etat == '0'){//on affichera les infos des message non lus en couleur
 				couleur("41");
-				printf(" NON LU <%d> expediteur : %s",j,expediteur);
+				printf(" NEW <%d> expediteur : %s",j,expediteur);
 				couleur("0");
 				printf("\n");
 				couleur("41");
@@ -585,7 +605,7 @@ void lire(){
 				printf("une erreur s'est produite /n");
 				exit(INTERN_ERROR);
 			}
-			printf("[debbug] %s\n",response );
+			//printf("[debbug] %s\n",response );
 
 			while(response[i]!='/'){// recuperation du champ expediteur
 				expediteur[pos]=response[i];
@@ -666,4 +686,51 @@ void supprimer(){
 	}
 
 
+}
+/*ce sous programme se charge
+ *de d'inscrire l'utilisateur
+ */
+ void inscription(){
+	int num;
+	char login[TAILLE_ID];
+	char request[TAILLE_REQUETTE];
+	char password[TAILLE_PASSWORD];
+	char password_test[TAILLE_PASSWORD];
+	char * response;
+
+	printf("rentrez le login: ");
+	fgets(login,TAILLE_ID,stdin);
+	do{//on demandera a l'utilisateur de saisir le mot de passe 2 fois
+		// on ne valide la saisi que si les deux mot de passe sont identique
+		printf("rentrer le mot de passe:");
+		fgets(password,TAILLE_PASSWORD,stdin);
+
+		printf("veuillez confirmer le mot de passe :");
+		fgets(password_test,TAILLE_PASSWORD,stdin);
+		password[strlen(password)-1]='\0';// elimination des \n
+		password_test[strlen(password_test)-1]='\0';
+		if (strcmp(password_test,password))
+			printf("attention les mot de passes ne sont pas identique \n");
+
+	}while(strcmp(password_test,password));
+
+	login[strlen(login)-1]='\0';
+	strncpy(password,crypt(password,"$6$"),TAILLE_PASSWORD);
+	sprintf(request,"inscrption/%s/%s/;",login,password);
+
+	Emission(request);
+
+	response=Reception();
+
+	if( response == NULL || sscanf(response,"return/%d/;",&num) != 1 ){// verification du bon deroulement de la reception
+																		// et de l'extraction des parametres
+		printf("une erreur s'est produite  \n" );
+		exit(INTERN_ERROR);
+	}
+	if ( num == NO_PB)// contre du bon deroulement de l'inscription
+		printf ("inscription reussi \n");
+	else
+		printf("l'inscrption a echoué veuillez reessayer \n");
+
+	free(response);
 }
