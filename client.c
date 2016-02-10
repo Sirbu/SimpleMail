@@ -284,8 +284,8 @@ int authentification(char *login){
 	/*formulation de la requette*/
 
 	sprintf(request,"authentification/%s/%s/;",login,password);
+
 	/*envoie de la requette*/
-	printf("la requette %s\n",request);
 
 	Emission(request);
 
@@ -294,6 +294,7 @@ int authentification(char *login){
 
 	if (response==NULL || sscanf(response,"return/%d/;",&code_ret) != 1 ){
 		printf("une erreur s'est produite!!\n");
+		Terminaison();// fermeture de la connexion
 		exit(INTERN_ERROR);
 
     }
@@ -344,6 +345,7 @@ void Envoyermessage(char login[]){
 
 	if (response == NULL || sscanf(response,"return/%d/;",&code_ret)!=1 || code_ret == SERV_ERROR){
 		printf("une erreur s'est produite");
+		Terminaison();
 		exit(INTERN_ERROR);
 
 	}
@@ -372,9 +374,11 @@ void Envoyermessage(char login[]){
 
 				response=Reception();
 
-				if (response ==NULL || sscanf(response,"return/%d/;",&code_ret)!=1 )
+				if (response ==NULL || sscanf(response,"return/%d/;",&code_ret)!=1 ){
+					printf("une erreur s'est produite\n");
+					Terminaison();
 					exit(INTERN_ERROR);
-
+				}
 				if(code_ret== DEST_ERROR ){
 					printf("vous vous etes tropmé de destinataire voulez vous reessayer? o/oui n/non ");
 					continuer=fgetc(stdin);
@@ -382,6 +386,7 @@ void Envoyermessage(char login[]){
 				}
 				else if(code_ret != NO_PB){
 					printf("une erreur s'est produite!! %d \n",code_ret);
+					Terminaison();
 					exit(code_ret);
 				}
 			}
@@ -401,6 +406,7 @@ void deconnexion(){
 
 	Emission("disc/;");
 	printf("***************************\n vous ete maintenant deconnécté ,à bientot\n***************************\n");
+
 }
 
 /*le sous programme se chargera
@@ -418,6 +424,7 @@ void check(){
 
 	if (response == NULL || sscanf(response,"check/%d/;",&code_ret)!= 1){// teste de la requette
 				printf("une erreur intern s'est produite");
+				Terminaison();
 				exit(INTERN_ERROR);
 
     }
@@ -495,10 +502,11 @@ int list(char *param){
 	char* response = Reception();// reception de la premiere requette qui nous indiquera le nombre de message
 								//pour pouvoir se synchroniser a l'aide d'une boucle
 
-	if (response == NULL || sscanf(response,"info/%d/;",&nbre)!= 1)// test de la requette
-
+	if (response == NULL || sscanf(response,"info/%d/;",&nbre)!= 1){// test de la requette
+		printf("une erreur s'est produite\n");
+		Terminaison();
 		exit(INTERN_ERROR);
-
+	}
 
 	if (nbre == 0){
 		printf("vous n'avez aucun nouveaux message ");
@@ -511,6 +519,7 @@ int list(char *param){
 
 			if(response == NULL){// teste de la requette
 				printf("une erreur s'est produite");
+				Terminaison();
 				exit(SERV_ERROR);
 			}
 			printf("[DEBBUG]%s\n",response );//DEBBUG
@@ -592,7 +601,7 @@ void lire(){
 				viderBuffer();
 			}
 
-		}while( rep == 'o' && nbre> code_ret);
+		}while( rep == 'o' && (nbre > code_ret || nbre < 1) );
 
 		if (nbre <= code_ret){
 
@@ -603,6 +612,7 @@ void lire(){
 			char* response = Reception();
 			if (response == NULL){
 				printf("une erreur s'est produite /n");
+				Terminaison();
 				exit(INTERN_ERROR);
 			}
 			//printf("[debbug] %s\n",response );
@@ -656,7 +666,7 @@ void supprimer(){
 				rep=getchar();
 				viderBuffer();
 			}
-		}while(rep=='o' && num > nbre_message);
+		}while(rep=='o' && ( num > nbre_message || num < 1));
 
 		if ( num <= nbre_message){
 			printf("etes vous sur de vouloir supprimer ?? o/n ");
@@ -670,6 +680,7 @@ void supprimer(){
 
 				if( response == NULL || sscanf(response,"return/%d/;",&num) != 1 ){
 					printf("une erreur s'est produite [delete] \n" );
+					Terminaison();
 					exit(INTERN_ERROR);
 				}
 				if(num== NO_PB)
@@ -716,7 +727,7 @@ void supprimer(){
 
 	login[strlen(login)-1]='\0';
 	strncpy(password,crypt(password,"$6$"),TAILLE_PASSWORD);
-	sprintf(request,"inscrption/%s/%s/;",login,password);
+	sprintf(request,"inscription/%s/%s/;",login,password);
 
 	Emission(request);
 
@@ -725,6 +736,7 @@ void supprimer(){
 	if( response == NULL || sscanf(response,"return/%d/;",&num) != 1 ){// verification du bon deroulement de la reception
 																		// et de l'extraction des parametres
 		printf("une erreur s'est produite  \n" );
+		Terminaison();
 		exit(INTERN_ERROR);
 	}
 	if ( num == NO_PB)// contre du bon deroulement de l'inscription
