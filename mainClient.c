@@ -20,7 +20,8 @@ int main(){
         exit(INTERN_ERROR);
     }
 
-    while (principal != 3){
+    while (principal != '3'){
+
 
         afficher_menu();
         principal=getchar();
@@ -31,6 +32,7 @@ int main(){
             do{
 
                 if ( continuer == 'n' )/*si jamais l'utilisateur ne veut pas se reauthentifier*/
+
                     exit(AUTH_ERROR);
 
                     ret=authentification(login);
@@ -44,8 +46,13 @@ int main(){
                     viderBuffer();
 
                 }
+                /*if (ret == SERV_ERROR){
+                    printf("une erreur s'est produite\n");
+                    exit(SERV_ERROR);
+                }
+                printf("ret vau %d",ret);*/
 
-            }while( ret == AUTH_ERROR && continuer == 'y' );
+            }while( (ret == AUTH_ERROR ) && continuer == 'y' );
 
             if(ret != NO_PB ){
                 printf("++++++++++++++++a bientot!!+++++++++++++++++\n");
@@ -133,8 +140,11 @@ int main(){
         else if( principal == '2' ){
             inscription();
         }
-        else
+        else{
+            Terminaison();// fermé la connexion
             return 1;
+
+        }
     }
     return 0;
 }
