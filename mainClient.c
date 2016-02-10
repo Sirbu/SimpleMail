@@ -32,6 +32,7 @@ int main(){
             do{
 
                 if ( continuer == 'n' )/*si jamais l'utilisateur ne veut pas se reauthentifier*/
+
                     exit(AUTH_ERROR);
 
                     ret=authentification(login);
