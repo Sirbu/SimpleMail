@@ -385,12 +385,17 @@ int parseLoginPass(char* requete, char* login, char* password)
 	// sur le '/' juste avant le mot de passe
 	p_requete = strchr(p_requete, '/');
 
-
 	// on incrémente encore une fois pour
 	// qu'il se place juste après le '/'
 	p_requete++;
 
-	strncpy(password, p_requete, TAILLE_PASS);
+	i = 0;
+	while(!(p_requete[i] == '/' && p_requete[i+1] == ';'))
+	{
+		password[i] = p_requete[i];
+		i++;
+	}
+	password[i] = '\0';
 
 	// printf("[D] Password : %s\n", password);
 
@@ -502,6 +507,16 @@ int inscription(char* requete)
 		envoi_reponse(AUTH_ERROR);
 
 		return 0;
+	}
+
+	// si l'utilisateur est déjà inscrit,
+	// on refuse l'inscription
+	if(checkLogin(login) == 1)
+	{
+		fprintf(stderr, "[-] Erreur : utilisateur %s déjà existant !\n", login);
+		envoi_reponse(AUTH_ERROR);
+
+		return AUTH_ERROR;
 	}
 
 	auth_file = fopen("bdd", "a");
