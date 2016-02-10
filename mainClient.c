@@ -39,12 +39,12 @@ int main(){
                     printf("[D] LOGIN = %s RET = %d\n", login, ret);
 
                     if ( ret != NO_PB ){
-
-                    printf("*********erreur d'authentification *********\n");
-                    printf("voulez vous continuer ??? y/yes n/no\n ");
+                    couleur("46");
+                    printf("                        *********erreur d'authentification *********\n");
+                    printf("                        voulez vous continuer ??? y/yes n/no \n ");
                     continuer=fgetc(stdin);
                     viderBuffer();
-
+                    couleur("0");
                 }
                 /*if (ret == SERV_ERROR){
                     printf("une erreur s'est produite\n");
@@ -69,7 +69,7 @@ int main(){
             choix=fgetc(stdin);
             viderBuffer();
             while ( choix !='a' ){// tant que le client ne veut pas quitter
-                //system("clear");
+                system("clear");
                 if ( choix == 'b' ){
 
                     Envoyermessage(login);
@@ -79,13 +79,9 @@ int main(){
                 }
 
                 else if( choix == 'c' ){
-                    //system("clear");
+
                     afficher_menu2();
-
-                    //viderBuffer();
                     choix=fgetc(stdin);
-
-                    //system("clear");
                 }
                 else if ( choix == 'd' ){
                         check();
@@ -129,8 +125,6 @@ int main(){
                 viderBuffer();
                 system("clear");
 
-
-
             }
             /*une fois, ici le client veut se deconnecté
             deconnexion
@@ -138,6 +132,7 @@ int main(){
             deconnexion();
         }
         else if( principal == '2' ){
+            system("clear");
             inscription();
         }
         else if(principal == '3'){

@@ -268,6 +268,7 @@ int authentification(char *login){
 	char password[TAILLE_PASSWORD];
 
 	/********************************************************/
+	couleur("46");
 
 	printf("						BIENVENUE SUR MEDISCOU MESSENGER \n");
 	printf("						VEUILLEZ PROCEDER A VOTRE AUTHENTIFICATION \n");
@@ -277,7 +278,7 @@ int authentification(char *login){
 	printf("					PASSWORD: ");
 	fgets(password,TAILLE_PASSWORD,stdin);
 	password[strlen(password)-1]='\0';/*elimination du retour a la ligne*/
-
+	couleur("0");
 	/*cryptage du mot de passe avant l'envoie*/
 	strncpy(password,crypt(password,"$6$"),TAILLE_PASSWORD);
 
@@ -408,7 +409,7 @@ void Envoyermessage(char login[]){
 */
 void deconnexion(){
 
-	Emission("disc/;");
+	Emission("disconnect/;");
 	printf("***************************\n vous ete maintenant deconnécté ,à bientot\n***************************\n");
 
 }
@@ -441,15 +442,15 @@ void check(){
 */
 void afficher_menu(){
 	couleur("46");
-	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
-	printf("#		  1 : vous connecter    \n");
-	printf("#	_______________________________	\n");
-	printf("#		  2 : vous inscrire	\n");
-	printf("#	_______________________________	\n");
-	printf("#		  3 : quitter		\n");
-	printf("#	________________________________\n");
-	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
-	printf("	en attente de votre choix:      \n");
+	printf("		*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
+	printf("		#		  1 : vous connecter    \n");
+	printf("		#	_______________________________	\n");
+	printf("		#		  2 : vous inscrire	\n");
+	printf("		#	_______________________________	\n");
+	printf("		#		  3 : quitter		\n");
+	printf("		#	________________________________\n");
+	printf("		*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
+	printf("			en attente de votre choix:      \n");
 	couleur("0");
 
 }
@@ -457,14 +458,14 @@ void afficher_menu(){
 */
 void afficher_menu1(){
 	couleur("46");
-	printf("*********************************************************\n");
-	printf("		a : deconnexion									#\n");
-	printf("#	______________________________________				#\n");
-	printf("		b : envoyer un message							#\n");
-	printf("	______________________________________				#\n");
-	printf("#		c : consulter vos messages						#\n");
-	printf("*********************************************************\n");
-	printf("	en attente de votre choix: \n");
+	printf("*******************************************\n");
+	printf("		a : deconnexion	           \n");
+	printf("#	_______________________________    \n");
+	printf("		b : envoyer un message	   \n");
+	printf("	_______________________________    \n");
+	printf("#		c : consulter vos messages \n");
+	printf("*******************************************\n");
+	printf("	en attente de votre choix:         \n");
 	couleur("0");
 }
 /*affiche le menu secondaire
@@ -753,10 +754,16 @@ void supprimer(){
 		Terminaison();
 		exit(INTERN_ERROR);
 	}
-	if ( num == NO_PB)// contre du bon deroulement de l'inscription
-		printf ("inscription reussi \n");
-	else
-		printf("l'inscrption a echoué veuillez reessayer \n");
 
+	if ( num == NO_PB){// contre du bon deroulement de l'inscription
+		couleur("32");
+		printf ("inscription reussi \n");
+		couleur("0");
+	}
+	else{
+		couleur("42");
+		printf("l'inscrption a echoué veuillez reessayer \n");
+		couleur("0");
+	}
 	free(response);
 }
