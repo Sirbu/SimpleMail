@@ -294,13 +294,14 @@ int authentification(char *login){
 
 	if (response==NULL || sscanf(response,"return/%d/;",&code_ret) != 1 ){
 		printf("une erreur s'est produite!!\n");
+		free(response);//liberation de la memoire allouee par strdup
 		exit(INTERN_ERROR);
 
     }
 	else
+		printf("[D] REPONSE = %s && code_ret = %d\n", response, code_ret);
 		return (code_ret);
 
-	free(response);//liberation de la memoire allouee par strdup
 }
 
 /*ce sous programme prend en paramettre @ de l'expediteur
@@ -716,7 +717,7 @@ void supprimer(){
 
 	login[strlen(login)-1]='\0';
 	strncpy(password,crypt(password,"$6$"),TAILLE_PASSWORD);
-	sprintf(request,"inscrption/%s/%s/;",login,password);
+	sprintf(request,"inscription/%s/%s/;",login,password);
 
 	Emission(request);
 

@@ -149,6 +149,11 @@ int readMessage(char* requete, char* login);
 // numéro dans la requête.
 int deleteMessage(char* requete, char* login);
 
+// Inscrit un nouvel utilisateur.
+// La requête contient le login et
+// le mot de passe à écrire
+int inscription(char* requete);
+
 /********************
  * Fonctions Message
  *******************/

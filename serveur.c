@@ -304,7 +304,9 @@ void Terminaison() {
 	close(socketEcoute);
 }
 
-// Fonctions écrites par les élèves
+/*****************************
+ * Et voici nos fonctions !  *
+ *****************************/
 
 // Permet de parser la requête pour stocker
 // les différents champs
@@ -395,129 +397,6 @@ int parseLoginPass(char* requete, char* login, char* password)
 	return 0;
 }
 
-// vérifie les informations d'authentifcation en paramètres.
-// Attention, le mot de passe est un hash contenant l'id
-// de l'algorithme, le sel et le mot de passe. Le sel est une
-// chaine vide, et chaque champ est séparé par un '$' comme suit :
-// $id$salt$hash
-// Retourne 0 si tout s'est bien passé.
-// 1 si le login ou le mot de passe n'est pas bon
-int checkCredentials(char* login, char* password)
-{
-	// indique si on a trouvé la ligne
-	// correspondant au login dans le fichier bdd
-	// 0 pour non
-	// 1 pour oui
-	int found = 1;
-	int i = 0;
-
-	// permettra de stocker une ligne du fichier
-	char line[LINE_LENGTH];
-
-	FILE* auth_file = NULL;
-
-	// pointeur placé à la jonction dans la ligne
-	// entre login et password
-	char* p_pass = NULL;
-
-	if(checkLogin(login) != 1)
-	{
-		return AUTH_ERROR;
-	}
-
-	auth_file = fopen("bdd", "r");
-	if(auth_file == NULL)
-	{
-		fprintf(stderr, "[-] FATAL ERROR : carnet d'adressses introuvable\n");
-		envoi_reponse(SERV_ERROR);
-		return SERV_ERROR;
-	}
-
-	do
-	{
-		i = 0;
-		// au départ, on estime que le login est bien
-		// sur cette ligne.
-		found = 1;
-		fgets(line, 500, auth_file);
-		// permet d'enlever le newline qui fait chier
-		line[strlen(line)-1] = '\0';
-
-		// on cherche le login pour savoir si c'est
-		// la bonne ligne
-		while(line[i] != ':' && login[i] != '\0')
-		{
-			if(login[i] != line[i])
-			{
-				found = 0;
-			}
-			i++;
-		}
-
-	}while(!found);
-
-
-	p_pass = strchr(line, ':');
-	if(p_pass == NULL)
-	{
-		fprintf(stderr, "[-] Erreur : Fichier d'authentification corrompu !\n");
-		exit(EXIT_FAILURE);
-	}
-
-	// on retourne le réultat de la comparaison
-	// du hash reçu avec celui dans le fichier
-	p_pass++;
-	// printf("[D] p_pass = %s\npassword = %s\n", p_pass, password);
-	return strncmp(p_pass, password, strlen(p_pass));
-}
-
-// envoie une réponse contenant le code donné
-// en paramètre
-void envoi_reponse(int code_retour)
-{
-	char message[TAILLE_REQ];
-
-	sprintf(message, "return/%d/;", code_retour);
-
-	// printf("[D] return request : %s\n", message);
-
-	Emission(message);
-}
-
-// Gère toute la vérification de la demande
-// de connexion
-int authentification(char* requete, char* login, char* password)
-{
-	if(parseLoginPass(requete, login, password))
-	{
-		fprintf(stderr, "[-] Erreur : Extraction des informations d'authentification impossible !\n");
-
-		envoi_reponse(AUTH_ERROR);
-
-		exit(EXIT_FAILURE);
-	}
-
-	if(checkCredentials(login, password) == 0)
-	{
-		printf("[+] Authentification validée !\n");
-		printf("[+] Bienvenue %s !\n", login);
-
-		envoi_reponse(NO_PB);
-		// est authentifié
-		return 1;
-	}
-	else
-	{
-		printf("[+] Authentification refusée !\n");
-		printf("[+] Dégage %s !\n", login);
-		// n'est pas authentifié
-		envoi_reponse(AUTH_ERROR);
-
-		return 0;
-	}
-}
-
-
 /************************************
  * Cette fonction pourrait être bien plus élégante qu'elle ne l'est.
  * En utilisant une sous fonction ou des tableaux dynamiques pour
@@ -605,32 +484,164 @@ int parseMessage(char* requete, Message* mail)
 	return 0;
 }
 
-// permet d'extraire un paramètre, pointé par
-// p_start. Il sera retourné comme un char*
-// Cette fonction ne pourra pas être utilisée
-// pour extraire le contenu du message, car elle
-// se base sur la présence de '/' entre les paramètres.
-// Et c'est un caractère qui peut se retrouver dans le contenu
-// char* parseParam(char* requete, char* p_start)
-// {
-// 	int i = 0;
-//
-// 	// chaine qui sera retournée grâce à strdup()
-// 	char param[TAILLE_PARAM];
-//
-// 	// boucle jusqu'a ce que p_param = NULL
-// 	// Mais vérification de sa nullité dans le corps
-// 	// de boucle au cas ou on ne trouve pas de '/'
-//
-// 	while(p_requete[i] != '/')
-// 	{
-// 		param[i] = p_requete[i++];
-// 	}
-// 	param[i] = '\0';
-//
-// 	return strdup(param);
-// }
+// Permeet l'inscription d'un nouvel utilisateur
+// dont les login et password sont dans la requête
+int inscription(char* requete)
+{
+	char login[TAILLE_LOGIN];
+	char password[TAILLE_PASS];
 
+	char line[LINE_LENGTH];
+
+	FILE* auth_file = NULL;
+
+	if(parseLoginPass(requete, login, password))
+	{
+		fprintf(stderr, "[-] Erreur : Extraction des informations d'authentification impossible !\n");
+
+		envoi_reponse(AUTH_ERROR);
+
+		return 0;
+	}
+
+	auth_file = fopen("bdd", "a");
+	if(auth_file == NULL)
+	{
+		fprintf(stderr, "[-] Erreur : Carnet d'adresses inaccessible !\n");
+		envoi_reponse(SERV_ERROR);
+
+		return SERV_ERROR;
+	}
+
+	strncpy(line, login, LINE_LENGTH - 1);
+	strncat(line, ":", 1);
+	strncat(line, password, LINE_LENGTH - strlen(login));
+	strncat(line, "\n", 1);
+
+	if(fwrite(line, strlen(line), 1, auth_file) != 1)
+	{
+		fprintf(stderr, "[-] Erreur : Écriture dans la carnet impossible !\n");
+		envoi_reponse(SERV_ERROR);
+
+		fclose(auth_file);
+		return SERV_ERROR;
+	}
+
+	printf("[+] Inscription validée pour %s !\n", login);
+	fclose(auth_file);
+
+	return 0;
+}
+
+// vérifie les informations d'authentifcation en paramètres.
+// Attention, le mot de passe est un hash contenant l'id
+// de l'algorithme, le sel et le mot de passe. Le sel est une
+// chaine vide, et chaque champ est séparé par un '$' comme suit :
+// $id$salt$hash
+// Retourne 0 si tout s'est bien passé.
+// 1 si le login ou le mot de passe n'est pas bon
+int checkCredentials(char* login, char* password)
+{
+	// indique si on a trouvé la ligne
+	// correspondant au login dans le fichier bdd
+	// 0 pour non
+	// 1 pour oui
+	int found = 1;
+	int i = 0;
+
+	// permettra de stocker une ligne du fichier
+	char line[LINE_LENGTH];
+
+	FILE* auth_file = NULL;
+
+	// pointeur placé à la jonction dans la ligne
+	// entre login et password
+	char* p_pass = NULL;
+
+	if(checkLogin(login) != 1)
+	{
+		return AUTH_ERROR;
+	}
+
+	auth_file = fopen("bdd", "r");
+	if(auth_file == NULL)
+	{
+		fprintf(stderr, "[-] FATAL ERROR : carnet d'adressses introuvable\n");
+		envoi_reponse(SERV_ERROR);
+		return SERV_ERROR;
+	}
+
+	do
+	{
+		i = 0;
+		// au départ, on estime que le login est bien
+		// sur cette ligne.
+		found = 1;
+		fgets(line, LINE_LENGTH, auth_file);
+		// permet d'enlever le newline qui fait chier
+		line[strlen(line)-1] = '\0';
+
+		// on cherche le login pour savoir si c'est
+		// la bonne ligne
+		while(line[i] != ':' && login[i] != '\0')
+		{
+			if(login[i] != line[i])
+			{
+				found = 0;
+			}
+			i++;
+		}
+
+	}while(!found);
+
+
+	p_pass = strchr(line, ':');
+	if(p_pass == NULL)
+	{
+		fprintf(stderr, "[-] Erreur : Fichier d'authentification corrompu !\n");
+		return 1;
+	}
+
+	// on retourne le réultat de la comparaison
+	// du hash reçu avec celui dans le fichier
+	p_pass++;
+	// printf("[D] p_pass = %s\npassword = %s\n", p_pass, password);
+	return strncmp(p_pass, password, strlen(p_pass));
+}
+
+// Gère toute la vérification de la demande
+// de connexion. Les login et passwords sont
+// parsés depuis la requête et stockés dans leurs tableaux
+int authentification(char* requete, char* login, char* password)
+{
+	if(parseLoginPass(requete, login, password))
+	{
+		fprintf(stderr, "[-] Erreur : Extraction des informations d'authentification impossible !\n");
+
+		envoi_reponse(AUTH_ERROR);
+
+		return 0;
+	}
+
+	if(checkCredentials(login, password) == 0)
+	{
+		printf("[+] Authentification validée !\n");
+		printf("[+] Bienvenue %s !\n", login);
+
+		envoi_reponse(NO_PB);
+		// est authentifié
+		return 1;
+	}
+	else
+	{
+		printf("[+] Authentification refusée !\n");
+		printf("[+] Dégage %s !\n", login);
+		// n'est pas authentifié
+		envoi_reponse(AUTH_ERROR);
+
+		return 0;
+	}
+}
 
 // Prend en paramètre la requête demandant
 // l'envoi d'un message, et va stocker le dit
@@ -720,7 +731,7 @@ int sendMessage(char* requete)
 int checkLogin(char* login)
 {
 	// ligne lue dans le fichier d'authentification
-	char line[500];
+	char line[LINE_LENGTH];
 
 	// va contenir le login présent dans le fichier
 	char credential[TAILLE_LOGIN];
@@ -741,7 +752,7 @@ int checkLogin(char* login)
 	}
 
 	// tant qu'on est pas à la fin du fichier ou que existe = 1
-	while(fgets(line, 500, auth_file) != NULL && existe == 0)
+	while(fgets(line, LINE_LENGTH, auth_file) != NULL && existe == 0)
 	{
 		bzero(credential, TAILLE_LOGIN);
 		p_line = strchr(line, ':');
@@ -754,6 +765,9 @@ int checkLogin(char* login)
 			return SERV_ERROR;
 		}
 
+		// ici je calcule la taille en soustrayant l'adresse
+		// juste après le dernier caractère du login et celle
+		// du début de la ligne.
 		strncpy(credential, line, (int)(p_line-line));
 
 		if(!strncmp(credential, login, TAILLE_LOGIN))
@@ -807,7 +821,10 @@ int checkNewMessages(char* login)
 		// si on est pas sur le dossier courant ou parent...
 		if(strchr(filename, '.') == NULL)
 		{
-			lireMessage(mail_courant, filename);
+			if(lireMessage(mail_courant, filename) != 0)
+			{
+				return SERV_ERROR;
+			}
 
 			// printf("[D] LU : %c\n", mail_courant->lu);
 
@@ -1167,12 +1184,22 @@ int deleteMessage(char* requete, char* login)
 	return 0;
 }
 
-/*********************
- * Fonctions ayant rapport avec Message
- * Je les mets ici car je n'ai pas réussi à me
- * débrouiller avec les multiples inclusions bouclées
- * que provoquaient la présence de mail.c et mail.h
- *********************/
+
+// envoie une réponse contenant le code donné
+// en paramètre
+void envoi_reponse(int code_retour)
+{
+	char message[TAILLE_REQ];
+
+	sprintf(message, "return/%d/;", code_retour);
+	printf("trame envoyée : %s\n", message);
+
+	Emission(message);
+}
+
+/*****************************************************
+ * Fonctions ayant rapport avec la structure Message *
+ *****************************************************/
 
  // retourne un pointeur pointant
  // sur une zone allouée ayant la taille
@@ -1182,7 +1209,7 @@ int deleteMessage(char* requete, char* login)
 	Message* m = malloc(sizeof(Message));
 	if(m == NULL)
 	{
-		fprintf(stderr, "[-] Erreur : Malloc  message !\n");
+		fprintf(stderr, "[-] Erreur : Malloc  message impossible !\n");
 		exit(EXIT_FAILURE);
 	}
 

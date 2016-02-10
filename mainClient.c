@@ -34,6 +34,7 @@ int main(){
                     exit(AUTH_ERROR);
 
                     ret=authentification(login);
+                    printf("[D] LOGIN = %s RET = %d\n", login, ret);
 
                     if ( ret != NO_PB ){
 
@@ -48,6 +49,7 @@ int main(){
 
             if(ret != NO_PB ){
                 printf("++++++++++++++++a bientot!!+++++++++++++++++\n");
+                Terminaison();
                 exit(AUTH_ERROR);
             }
 
