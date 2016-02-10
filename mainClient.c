@@ -22,11 +22,11 @@ int main(){
 
     while (principal != '3'){
 
-
+        //system("clear");
         afficher_menu();
         principal=getchar();
         viderBuffer();
-
+        system("clear");
         if(principal == '1'){
             // l'authentification
             do{
@@ -140,11 +140,11 @@ int main(){
         else if( principal == '2' ){
             inscription();
         }
-        else{
+        else if(principal == '3'){
             Terminaison();// fermé la connexion
             return 1;
 
-        }
+        }// si l'utilisateur saisi un chifre autre que 1/2/3 rien ne se passera
     }
     return 0;
 }

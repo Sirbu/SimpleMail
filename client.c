@@ -269,12 +269,12 @@ int authentification(char *login){
 
 	/********************************************************/
 
-	printf("bienvenue sur votre messagerie\n !!");
-	printf("authentifiez vous!!\n");
-	printf("login: ");
+	printf("						BIENVENUE SUR MEDISCOU MESSENGER \n");
+	printf("						VEUILLEZ PROCEDER A VOTRE AUTHENTIFICATION \n");
+	printf("					LOGIN: ");
 	fgets(login,TAILLE_ID,stdin);
 	login[strlen(login)-1]='\0';/*elimination du retour a la ligne*/
-	printf("password: ");
+	printf("					PASSWORD: ");
 	fgets(password,TAILLE_PASSWORD,stdin);
 	password[strlen(password)-1]='\0';/*elimination du retour a la ligne*/
 
@@ -302,7 +302,7 @@ int authentification(char *login){
 
     }
 	else
-		printf("[D] REPONSE = %s && code_ret = %d\n", response, code_ret);
+		//printf("[D] REPONSE = %s && code_ret = %d\n", response, code_ret);// DEBBUG
 		return (code_ret);
 
 }
@@ -324,15 +324,15 @@ void Envoyermessage(char login[]){
 	int code_ret;
 
 
-	printf("veuillez saisir l'@ destinatrice: ");
+	printf("@ DESTINATRICE : ");
 	fgets(dest,TAILLE_ID,stdin);
 	dest[strlen(dest)-1]='\0';
 
-	printf("veuillez saisir objet: ");
+	printf("OBJET : ");
 	fgets(objet,TAILLE_PASSWORD,stdin);//etant donnée qu'on avait defini une taille assez grande pour le password je l'ai reutiliser ici
 	objet[strlen(objet)-1]='\0';// elimination de retour a la ligne
 
-	printf("veuillez saisonir votre message : ");
+	printf("CONTENU : ");
 	fgets(contenu,TAILLE_CONETENU,stdin);
 	contenu[strlen(contenu)-1]='\0';
 
@@ -363,7 +363,7 @@ void Envoyermessage(char login[]){
 			viderBuffer();
 			while(continuer=='o' && code_ret == DEST_ERROR ){
 
-				printf(" veuillez ressaisir la bonne adresse : ");
+				printf("  RESSAISI @ DESTINATRICE : ");
 
 				fgets(dest,TAILLE_ID,stdin);
 				dest[strlen(dest)-1]='\0';
@@ -394,10 +394,11 @@ void Envoyermessage(char login[]){
 				}
 			}
 
-		if (code_ret== NO_PB)
-			printf("message envoyé avec succès\n");
-
-
+		if (code_ret== NO_PB){
+			couleur("32");
+			printf("MESSAGE ENVOYE AVEC SUCCES \n");
+			couleur("0");
+		}
 
 	}// une fois ici c'est que tout s'est bien passé(reussi a envoyer ou abandonne )
 	free (response);
@@ -432,7 +433,7 @@ void check(){
 
     }
 	couleur("41");
-	printf("vous avez %d nouveaux message\n",code_ret);
+	printf("		VOUS AVEZ %d NOUVEAUX MESSAGES			\n",code_ret);
 	couleur("0");
 	free(response);
 }
@@ -440,14 +441,15 @@ void check(){
 */
 void afficher_menu(){
 	couleur("46");
-	printf("*************************************************************\n");
-	printf("1:vous connecter\n");
-	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
-	printf("2:s'inscrire \n");
-	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
-	printf("3:quitter\n");
-	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
-	printf("en attente de votre choix: \n");
+	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
+	printf("#		  1 : vous connecter    \n");
+	printf("#	_______________________________	\n");
+	printf("#		  2 : vous inscrire	\n");
+	printf("#	_______________________________	\n");
+	printf("#		  3 : quitter		\n");
+	printf("#	________________________________\n");
+	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
+	printf("	en attente de votre choix:      \n");
 	couleur("0");
 
 }
@@ -455,14 +457,14 @@ void afficher_menu(){
 */
 void afficher_menu1(){
 	couleur("46");
-	printf("*************************************************************\n");
-	printf("a:deconnexion\n");
-	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
-	printf("b:envoyer un message \n");
-	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
-	printf("c:consulter vos messages\n");
-	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
-	printf("en attente de votre choix: \n");
+	printf("*********************************************************\n");
+	printf("		a : deconnexion									#\n");
+	printf("#	______________________________________				#\n");
+	printf("		b : envoyer un message							#\n");
+	printf("	______________________________________				#\n");
+	printf("#		c : consulter vos messages						#\n");
+	printf("*********************************************************\n");
+	printf("	en attente de votre choix: \n");
 	couleur("0");
 }
 /*affiche le menu secondaire
@@ -470,20 +472,20 @@ void afficher_menu1(){
 */
 void afficher_menu2(){
 	couleur("46");
-	printf("\n*************************************************************\n");
-	printf("d:ya t-il des nouveaux message ?\n");
-	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
-	printf("e:liste des nouveaux messages \n");
-	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
-	printf("f:lire un message \n");
-	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
-	printf("g:liste de tout les messages \n");
-	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
-	printf("h:suppression d'un message \n");
-	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
-	printf("i:retourner au menu principal\n");
-	printf("*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
-	printf("en attente de votre choix: \n");
+	printf("\n***************************************************************\n");
+	printf("		d : ya t-il des nouveaux message ?						#\n");
+	printf("#	______________________________________						#\n");
+	printf("		e : liste des nouveaux messages 						#\n");
+	printf("#	______________________________________						#\n");
+	printf("		f : lire un message										#\n");
+	printf("#	______________________________________						#\n");
+	printf("		g : liste de tout les messages 							#\n");
+	printf("#	______________________________________						#\n");
+	printf("		h : suppression d'un message 							#\n");
+	printf("#	______________________________________						#\n");
+	printf("		i : retourner au menu principal							#\n");
+	printf("\n***************************************************************\n");
+	printf("	en attente de votre choix: \n");
 	couleur("0");
 }
 /*sous programme qui se chargera de l'affichage
@@ -512,7 +514,9 @@ int list(char *param){
 	}
 
 	if (nbre == 0){
-		printf("vous n'avez aucun nouveaux message ");
+		couleur("32");
+		printf("		VOUS N'AVEZ AUCUN NOUVEAUX MESSAGES 			\n");
+		couleur("0");
 	}
 	else{// on rentre dans une boucle pour recevoir les requette l'une a la suite des autres
 
@@ -558,12 +562,12 @@ int list(char *param){
 				couleur("0");
 				printf("\n");
 
-				printf("***************************************");
+				printf("_________________________________________");
 				printf("\n");
 
 		    }
 			else{// si il est deja lu on l'affiche normalement
-				printf("<%d> expediteur : %s \n objet : %s\n ***************************************\n",j,expediteur,objet);
+				printf("<%d> expediteur : %s \n objet : %s\n _________________________________________\n",j,expediteur,objet);
 
 			}
 			// vider les chaine de caracteres
@@ -599,7 +603,7 @@ void lire(){
 			scanf("%d",&nbre);
 			viderBuffer();
 			if ( nbre > code_ret){
-				printf("vous avez saisi un mauvais numero voulez vous ressaisir ? o/n" );
+				printf("vous avez saisi un mauvais numero voulez vous ressaisir ? o/n " );
 				rep=getchar();
 				viderBuffer();
 			}
@@ -642,7 +646,7 @@ void lire(){
 				pos++;
 			}
 			contenu[pos]='\0';
-			printf("****************************************************************************\nexpediteur: %s\nobjet: %s\ncontenu: %s\n**************************************************************************\n",expediteur,objet,contenu);
+			printf("________________________________________________\nexpediteur: %s\nobjet: %s\ncontenu: %s\n________________________________________________\n",expediteur,objet,contenu);
 
 			free(response);
 		}
@@ -686,10 +690,16 @@ void supprimer(){
 					Terminaison();
 					exit(INTERN_ERROR);
 				}
-				if(num== NO_PB)
-					printf("message supprimé avec succes");
-				else
-					printf("le message n'a pas pu etre supprimer");
+				if(num== NO_PB){
+					couleur("32");
+					printf("MESSAGE SUPPRIME AVEC SUCCES					  ");
+					couleur("0");
+				}
+				else{
+					couleur("32");
+					printf("LE MESSAGE N'A PAS PU ETRE SUPPRIMER			  ");
+					couleur("0");
+				}
 				free(response);
 			}
 
@@ -731,6 +741,7 @@ void supprimer(){
 	login[strlen(login)-1]='\0';
 	strncpy(password,crypt(password,"$6$"),TAILLE_PASSWORD);
 	sprintf(request,"inscription/%s/%s/;",login,password);
+	printf("debbug %s ",request);
 
 	Emission(request);
 
