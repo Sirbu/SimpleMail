@@ -332,7 +332,8 @@ void Envoyermessage(char login[]){
 	printf("OBJET : ");
 	fgets(objet,TAILLE_PASSWORD,stdin);//etant donnée qu'on avait defini une taille assez grande pour le password je l'ai reutiliser ici
 	objet[strlen(objet)-1]='\0';// elimination de retour a la ligne
-
+	transparence(objet);// nous permet d'elimner les '/' et les remplacer par '\'
+						// si jamais il existe
 	printf("CONTENU : ");
 	fgets(contenu,TAILLE_CONETENU,stdin);
 	contenu[strlen(contenu)-1]='\0';
@@ -530,7 +531,7 @@ int list(char *param){
 				Terminaison();
 				exit(SERV_ERROR);
 			}
-			printf("[DEBBUG]%s\n",response );//DEBBUG
+			//printf("[DEBBUG]%s\n",response );//DEBBUG
 			pos=0;//remise a zero du compteur
 			paid=strchr(response,'/');// paid pointera sur le premier '/' trouvé
 			paid++;// on recupere le deuxiemme champ(info/etat/expediteur/objet/;)
@@ -552,6 +553,8 @@ int list(char *param){
 				pos++;
 			}
 			objet[pos] = '\0';
+			anti_transparence(objet);// remettre les /
+
 			// une fois ici on aura recuperer les champs requis pour l'affichage
 			if(etat == '0'){//on affichera les infos des message non lus en couleur
 				couleur("41");
@@ -639,6 +642,7 @@ void lire(){
 				pos++;
 			}
 			objet[pos]='\0';
+			anti_transparence(objet);
 			pos=0;
 			i++;
 			while(response[i]!='\0' && response[i+1]!=';'){//etant donnée que la requette se termine par /;
@@ -723,26 +727,34 @@ void supprimer(){
 	char password_test[TAILLE_PASSWORD];
 	char * response;
 
-	printf("rentrez le login: ");
+	printf("			rentrez le login: ");
 	fgets(login,TAILLE_ID,stdin);
 	do{//on demandera a l'utilisateur de saisir le mot de passe 2 fois
 		// on ne valide la saisi que si les deux mot de passe sont identique
-		printf("rentrer le mot de passe:");
+		printf("		rentrer le mot de passe:");
 		fgets(password,TAILLE_PASSWORD,stdin);
 
-		printf("veuillez confirmer le mot de passe :");
+		printf("		veuillez confirmer le mot de passe :");
 		fgets(password_test,TAILLE_PASSWORD,stdin);
 		password[strlen(password)-1]='\0';// elimination des \n
 		password_test[strlen(password_test)-1]='\0';
-		if (strcmp(password_test,password))
+		// controle de saisi
+		if(strchr(login,'/') != NULL || strchr(login,':') != NULL){
+			printf("attention le login contient des characteres interdit('/',':')\n");
+			printf("veuillez ressaisir le login\n");
+			fgets(login,TAILLE_ID,stdin);
+		}
+		if (strcmp(password_test,password)){
+			couleur("46");
 			printf("attention les mot de passes ne sont pas identique \n");
-
-	}while(strcmp(password_test,password));
+			couleur("");
+		}
+	}while(strcmp(password_test,password) || strchr(password,'/') != NULL || strchr(password,':') != NULL);
 
 	login[strlen(login)-1]='\0';
 	strncpy(password,crypt(password,"$6$"),TAILLE_PASSWORD);
 	sprintf(request,"inscription/%s/%s/;",login,password);
-	printf("debbug %s ",request);
+	//printf("debbug %s ",request);
 
 	Emission(request);
 
@@ -766,4 +778,39 @@ void supprimer(){
 		couleur("0");
 	}
 	free(response);
+}
+/*ce sous programme nous permettra
+*d'eliminer le charactere '/' et le remplacer par un autre'\'
+*pour ne pas avoir confusion entre le / et la separation des champs
+*dans ma requette
+*/
+void transparence(char tab[]){
+	int i =0;
+
+	while ((tab[i] !='/') && (tab[i]!= '\0'))
+	{
+		i++;
+	}
+	if(tab[i]== '/')
+	{
+		tab[i]='\\';
+	}
+}
+/*ce sous programme nous permet de de faire l'operation inverse
+*remettre le / en recevant ma traitement
+*ca fait la ceciproque de transparence
+*/
+void anti_transparence(char tab[]){
+	int i =0;
+
+	while ((tab[i] !='\\') && (tab[i]!= '\0'))
+	{
+		i++;
+	}
+	if(tab[i]== '\\')
+	{
+		tab[i]='/';
+	}
+//printf("%s",tab); debbug
+
 }

@@ -105,6 +105,20 @@ void supprimer();
 
 /*ce sous programme se charge
  *de d'inscrire l'utilisateur
+ *ce sous programme nous interdit de nous reeinscrire si on a deja un compte
+ *et n'autorise pas le ': 'et les '/'
  */
  void inscription();
+ /*
+ *ce sous programme nous permettra
+ *d'eliminer le charactere '/' et le remplacer par un autre
+ *pour ne pas avoir confusion entre le / et la separation des champs
+ *dans ma requette
+ */
+ void transparence(char tab[]);
+ /*
+ *ce sous programme nous permet de de faire l'operation inverse
+ *remettre le / en recevant ma traitement
+ */
+void anti_transparence(char tab[]);
 #endif
