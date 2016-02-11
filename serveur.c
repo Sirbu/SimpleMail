@@ -489,8 +489,9 @@ int parseMessage(char* requete, Message* mail)
 	return 0;
 }
 
-// Permeet l'inscription d'un nouvel utilisateur
-// dont les login et password sont dans la requête
+// Inscrit un nouvel utilisateur.
+// La requête contient le login et le mot de passe à écrire.
+// Si l'utilisateur est déjà inscrit, la demande est rejetée.
 int inscription(char* requete)
 {
 	char login[TAILLE_LOGIN];
@@ -980,7 +981,7 @@ int listMessages(char* requete, char* login)
 	// Émission de la première trame d'informations
 	// On prévient le client du nombre de requêtes
 	// à venir
-	printf("[D] 1ere REPONSE : %s\n", reponse);
+	// printf("[D] 1ere REPONSE : %s\n", reponse);
 	Emission(reponse);
 
 	// Pour une raison que j'ignore, le tableau des
@@ -996,7 +997,7 @@ int listMessages(char* requete, char* login)
 
 		if(strncmp(param, "new", 3) == 0)
 		{
-			printf("[D] Traitement mess non lus\n");
+			// printf("[D] Traitement mess non lus\n");
 			if((char)mails[i].lu == '0')
 			{
 				sprintf(reponse, "info/");
@@ -1007,7 +1008,7 @@ int listMessages(char* requete, char* login)
 				strncat(reponse, mails[i].obj, TAILLE_OBJ);
 				strncat(reponse, "/;", 2);
 
-				printf("[D] INFOS reponse = %s\n", reponse);
+				// printf("[D] INFOS reponse = %s\n", reponse);
 
 				Emission(reponse);
 				j++;
@@ -1015,7 +1016,7 @@ int listMessages(char* requete, char* login)
 		}
 		else
 		{
-			printf("[D] Traitement messages lus\n");
+			// printf("[D] Traitement messages lus\n");
 
 			if((char)mails[i].lu == '0' || (char)mails[i].lu == '1')
 			{
@@ -1027,7 +1028,7 @@ int listMessages(char* requete, char* login)
 				strncat(reponse, mails[i].obj, TAILLE_OBJ);
 				strncat(reponse, "/;", 2);
 
-				printf("[D] INFOS reponse = %s\n", reponse);
+				// printf("[D] INFOS reponse = %s\n", reponse);
 				Emission(reponse);
 				j++;
 			}
@@ -1093,7 +1094,7 @@ int readMessage(char* requete, char* login)
 		if(strchr(fichier_mess->d_name, '.') == NULL)
 		{
 			sprintf(filename, "%s/%s", login, fichier_mess->d_name);
-			printf("[D] Lecture prochain message : %s\n", filename);
+			// printf("[D] Lecture prochain message : %s\n", filename);
 
 			if(lireMessage(mail, filename) != 0)
 			{
@@ -1131,7 +1132,7 @@ int readMessage(char* requete, char* login)
 
 	sprintf(reponse, "message/%s/%s/%s/;\n", mail->src, mail->obj, mail->mess);
 
-	printf("[D] Reponse %s\n", reponse);
+	// printf("[D] Reponse %s\n", reponse);
 
 	Emission(reponse);
 
@@ -1179,7 +1180,7 @@ int deleteMessage(char* requete, char* login)
 	{
 		if(strchr(fichier_mess->d_name, '.') == NULL)
 		{
-			printf("[D] Message %d\n", i);
+			// printf("[D] Message %d\n", i);
 			i++;
 		}
 	}
@@ -1207,7 +1208,7 @@ void envoi_reponse(int code_retour)
 	char message[TAILLE_REQ];
 
 	sprintf(message, "return/%d/;", code_retour);
-	printf("trame envoyée : %s\n", message);
+	// printf("[D] trame envoyée : %s\n", message);
 
 	Emission(message);
 }
@@ -1254,28 +1255,28 @@ int lireMessage(Message* mail, char* fichier)
 
 	if(fgets(mail->src, TAILLE_LOGIN, fic) == NULL)
 	{
-		fprintf(stderr, "[D] Erreur : lecture impossible -> %s\n", fichier);
+		fprintf(stderr, "[-] Erreur : lecture impossible -> %s\n", fichier);
 		return SERV_ERROR;
 	}
 	mail->src[strlen(mail->src)-1] = '\0';
 
 	if(fgets(mail->dest, TAILLE_LOGIN, fic) == NULL)
 	{
-		fprintf(stderr, "[D] Erreur : lecture impossible -> %s\n", fichier);
+		fprintf(stderr, "[-] Erreur : lecture impossible -> %s\n", fichier);
 		return SERV_ERROR;
 	}
 	mail->dest[strlen(mail->dest)-1] = '\0';
 
 	if(fgets(mail->obj, TAILLE_OBJ, fic) == NULL)
 	{
-		fprintf(stderr, "[D] Erreur : lecture impossible -> %s\n", fichier);
+		fprintf(stderr, "[-] Erreur : lecture impossible -> %s\n", fichier);
 		return SERV_ERROR;
 	}
 	mail->obj[strlen(mail->obj)-1] = '\0';
 
 	if(fgets(mail->mess, TAILLE_MESS, fic) == NULL)
 	{
-		fprintf(stderr, "[D] Erreur : lecture impossible -> %s\n", fichier);
+		fprintf(stderr, "[-] Erreur : lecture impossible -> %s\n", fichier);
 		return SERV_ERROR;
 	}
 	mail->mess[strlen(mail->mess)-1] = '\0';

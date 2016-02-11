@@ -150,8 +150,8 @@ int readMessage(char* requete, char* login);
 int deleteMessage(char* requete, char* login);
 
 // Inscrit un nouvel utilisateur.
-// La requête contient le login et
-// le mot de passe à écrire
+// La requête contient le login et le mot de passe à écrire.
+// Si l'utilisateur est déjà inscrit, la demande est rejetée.
 int inscription(char* requete);
 
 /********************

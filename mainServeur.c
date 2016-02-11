@@ -50,7 +50,7 @@ int main(void)
         {
             requete = Reception();
 
-            printf("[D] Message reçu : %s\n", requete);
+            printf("Message reçu : %s\n", requete);
             if(requete == NULL)
             {
                 printf("[-] Warning : connexion interrompue !\n");
@@ -73,13 +73,13 @@ int main(void)
                     // encore logué
                     if(strncmp(type_requete, "authentification", strlen(type_requete)) == 0)
                     {
-                        printf("[+] Demande d'authentification\n");
+                        printf("\n##### Demande d'authentification #####\n");
 
                         authentifie = authentification(requete, login, password);
                     }
                     else if((strncmp(type_requete, "inscription", strlen(type_requete)) == 0))
                     {
-                        printf("[+] Demande d'inscription\n");
+                        printf("##### Demande d'inscription #####\n");
 
                         if(inscription(requete) != 0)
                         {
@@ -102,7 +102,7 @@ int main(void)
                 {
                     if(strncmp(type_requete, "send", strlen(type_requete)) == 0)
                     {
-                        printf("[+] Demande d'envoi d'un message\n");
+                        printf("\n##### Demande d'envoi d'un message #####\n");
 
                         if(sendMessage(requete) == SERV_ERROR)
                         {
@@ -113,7 +113,7 @@ int main(void)
                     }
                     else if(strncmp(type_requete, "check", strlen(type_requete)) == 0)
                     {
-                        printf("[+] Demande du nombre de messages non lus\n");
+                        printf("\n##### Demande du nombre de messages non lus #####\n");
 
                         if(checkNewMessages(login) != 0)
                         {
@@ -124,7 +124,7 @@ int main(void)
                     }
                     else if(strncmp(type_requete, "list", strlen(type_requete)) == 0)
                     {
-                        printf("[+] Demande de listing\n");
+                        printf("\n##### Demande de listing #####\n");
 
                         if(listMessages(requete, login) != 0)
                         {
@@ -135,7 +135,7 @@ int main(void)
                     }
                     else if(strncmp(type_requete, "read", strlen(type_requete)) == 0)
                     {
-                        printf("[+] Demande de lecture de message\n");
+                        printf("\n##### Demande de lecture de message #####\n");
 
                         if(readMessage(requete, login) != 0)
                         {
@@ -146,7 +146,7 @@ int main(void)
                     }
                     else if((strncmp(type_requete, "delete", strlen(type_requete)) == 0))
                     {
-                        printf("[+] Demande de suppression de message\n");
+                        printf("\n##### Demande de suppression de message #####\n");
 
                         if(deleteMessage(requete, login) != 0)
                         {
@@ -157,7 +157,7 @@ int main(void)
                     }
                     else if((strncmp(type_requete, "disconnect", strlen(type_requete)) == 0))
                     {
-                        printf("[+] Demande de déconnexion !\n");
+                        printf("\n##### Demande de déconnexion ! #####\n");
 
                         authentifie = 0;
                         printf("[+] Déconnexion aceptée : Au revoir %s\n", login);
@@ -172,7 +172,7 @@ int main(void)
                     }
                     else
                     {
-                        printf("[+] Erreur : trame non reconnue !\n");
+                        printf("[-] Erreur : trame non reconnue !\n");
                         envoi_reponse(SERV_ERROR);
                     }
 
