@@ -319,9 +319,6 @@ void Envoyermessage(char login[]){
 	char contenu[TAILLE_CONETENU];
 	char request[TAILLE_REQUETTE];
 
-
-
-
 	int code_ret;
 
 
@@ -334,6 +331,8 @@ void Envoyermessage(char login[]){
 	objet[strlen(objet)-1]='\0';// elimination de retour a la ligne
 	transparence(objet);// nous permet d'elimner les '/' et les remplacer par '\'
 						// si jamais il existe
+	// rajout du mot (recu) qui sera utilie au serveur pour rajouter la date de reception
+	strcat(objet ," recu:");
 	printf("CONTENU : ");
 	fgets(contenu,TAILLE_CONETENU,stdin);
 	contenu[strlen(contenu)-1]='\0';

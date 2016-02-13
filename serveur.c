@@ -673,6 +673,7 @@ int sendMessage(char* requete)
 	// fichier
 	time_t current_time;
 	struct tm* c_time_struct = NULL;
+	char date_envoi[25];
 
 	Message* mail = createMessage();
 
@@ -720,11 +721,17 @@ int sendMessage(char* requete)
 	filename[strlen(filename)] = '/';
 	strcat(filename, mail->src);
 	// écriture de la date dans le nom du fichier
-	sprintf(filename+strlen(filename), "_%d-%d-%d_%d-%d-%d",
-		c_time_struct->tm_mday,	c_time_struct->tm_mon, c_time_struct->tm_year,
+
+	sprintf(date_envoi, " %d-%d-%d_%d-%d-%d",
+		c_time_struct->tm_mday,	c_time_struct->tm_mon+1, c_time_struct->tm_year+1900,
 		c_time_struct->tm_hour,	c_time_struct->tm_min, c_time_struct->tm_sec);
 
+	strncpy(filename+strlen(filename), date_envoi, 25);
+
 	// printf("[D] filename = %s\n", filename);
+
+	// on ajoute la date d'envoi dans l'objet
+	strncat(mail->obj, date_envoi, 25);
 
 	if(ecrireMessage(mail, filename) == 0)
 	{

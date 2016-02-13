@@ -50,7 +50,7 @@ int main(void)
         {
             requete = Reception();
 
-            printf("Message reçu : %s\n", requete);
+            printf("Message reçu : %s\n:", requete);
             if(requete == NULL)
             {
                 printf("[-] Warning : connexion interrompue !\n");

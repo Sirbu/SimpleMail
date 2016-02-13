@@ -15,7 +15,7 @@
 
 #define TAILLE_MESS     3500        // Taille max d'un message (le contenu)
 #define TAILLE_TYPE     512         // Taille max du type de la requête
-#define TAILLE_OBJ      50          // Taille max du l'objet du message
+#define TAILLE_OBJ      100          // Taille max du l'objet du message
 
 // nombre maximal de messages dans
 // la boite mail
