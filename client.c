@@ -270,7 +270,7 @@ int authentification(char *login){
 	/********************************************************/
 	couleur("46");
 
-	printf("						BIENVENUE SUR MEDISCOU MESSENGER \n");
+
 	printf("						VEUILLEZ PROCEDER A VOTRE AUTHENTIFICATION \n");
 	printf("					LOGIN: ");
 	fgets(login,TAILLE_ID,stdin);
@@ -354,10 +354,11 @@ void Envoyermessage(char login[]){
 
 	}
 
-	else if (code_ret == NO_PB)
+	else if (code_ret == NO_PB){
+		couleur("32");
 		printf("message envoyé avec succés !!\n");
-
-
+		couleur("0");
+}
 	else{
 			printf("vous vous etes tropmé de destinataire voulez vous reessayer? o/oui n/non ");
 			continuer=fgetc(stdin);
@@ -443,6 +444,7 @@ void check(){
 void afficher_menu(){
 	couleur("46");
 	printf("		*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+*+\n");
+	printf("			BIENVENUE SUR MEDISCU MESSENGER \n");
 	printf("		#		  1 : vous connecter    \n");
 	printf("		#	_______________________________	\n");
 	printf("		#		  2 : vous inscrire	\n");
